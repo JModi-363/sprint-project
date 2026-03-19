@@ -6,16 +6,31 @@ Developer: Jeet Modi
 
 # GLOBAL CONSTANTS (Pantry Rules)
 MENU_FILE = "size_options.txt"
+PAINT_OPTIONS = ("Acrylic", "Oil", "Watercolor", "Tempera", "Gouache")
 
 def get_customer_info():
     """Asks for name and studio location."""
     # TODO: Ask for name and delivery location.
-    return "Elena Thorne", "Studio #112A"
+    name = input("Enter your name: ").title().strip()
+    location = input("Enter your studio number: ").strip().upper()
+    return name, location
 
 def take_order():
     """Collects base, size, additive, and parts. Returns data."""
     # TODO: Capture base (Acrylic/Oil/Watercolor/Tempera/Gouache) and category (Coffee/Tea/Cocoa)
-    pass
+    while True:
+        base = input(f"Select a paint base: {', '.join(PAINT_OPTIONS)}\n").strip().title()
+        if base in PAINT_OPTIONS:
+            break
+        else:
+            print("Invalid input. Please select a valid paint base option.")
+
+    while True:
+        size = input("Select a size:\nSmall\nMedium\nLarge\n").strip().lower()
+        if size in ['small', 'medium', 'large']:
+            break
+        else:
+            print("Invalid input. Please select a valid size option.")
 
 def calculate_total(order_data):
     """Calculates price based on size and parts."""
