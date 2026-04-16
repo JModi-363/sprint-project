@@ -1,3 +1,4 @@
+import os
 import datetime  # Import the datetime library to timestamp our reports
 
 """
@@ -7,9 +8,12 @@ DEVELOPER: Jeet Modi
 """
 
 # GLOBAL CONSTANTS: Pantry Rules
-MENU_FILE = "paint_menu.txt"
-DATA_FILE = "order_history.txt"
-HUMAN_REPORT = "human_report.txt"
+# Use files relative to this script so running from another CWD still finds them
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+MENU_FILE = os.path.join(BASE_DIR, "paint_menu.txt")
+DATA_FILE = os.path.join(BASE_DIR, "order_history.txt")
+HUMAN_REPORT = os.path.join(BASE_DIR, "human_report.txt")
+# MILK_OPTIONS = ("Dairy", "Oat", "Almond", "Soy", "Coconut")
 TAX_RATE = 0.05
 
 
@@ -55,6 +59,8 @@ def take_order():
         paint_base = input("\nPaint Base: ").strip().lower().title()
         size = input("Size: ").strip().lower().title()
         additives = input("Additives: ").strip().lower().title()
+        # print(f"Available Milk: {MILK_OPTIONS}")
+        # milk = input("Choice of milk: ")
         if additives == "None":
             additive_parts = 0
             pass
@@ -147,8 +153,10 @@ def main():
     first_name, last_name, customer, location = get_customer_info()
     current_order = take_order()
     final_price, calculated_tax = calculate_total(current_order)
-    save_data_and_label(customer=customer, location=location, total=final_price, tax=calculated_tax)
-    print(f"\nUpdated Files {DATA_FILE} and {HUMAN_REPORT}.")
-    print_data_and_label(customer=customer, location=location, total=final_price, tax=calculated_tax)
+    save_data_and_label(customer=customer, location=location, total=final_price,\
+    tax=calculated_tax)
+    print(f"\n Files Updated: {DATA_FILE} and {HUMAN_REPORT}")
+    print_data_and_label(customer=customer, location=location, total=final_price,\
+    tax=calculated_tax)
 
 main()
