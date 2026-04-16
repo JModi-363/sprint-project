@@ -1,7 +1,7 @@
 import datetime  # Import the datetime library to timestamp our reports
 
 """
-ASSIGNMENT 12B: SPRINT 5 - DATA PERSISTENCE
+ASSIGNMENT 13B: SPRINT 6
 PROJECT: Art Center Mural Order System
 DEVELOPER: Jeet Modi
 """
