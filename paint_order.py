@@ -29,7 +29,7 @@ class PaintOrder:
         print("\n--- CURRENT ORDER DETAILS ---")
         print(f"[1] Customer: {self.customer}")
         print(f"[2] Paint Base: {self.paint_base}")
-        print(f"[3] Size:     {self.size}")
+        print(f"[3] Size: {self.size}")
         print(f"[4] Additives: {self.additives}")
         print(f"[5] Additive Parts: {self.additive_parts}")
         print(f"Total: ${self.get_total():.2f}")
