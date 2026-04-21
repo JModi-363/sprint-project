@@ -45,20 +45,20 @@ def main():
             order = Paint.from_input(artist, menu)
             print_label(order)
             confirm = input(
-                "Is this order correct? (y = save, u = update, d = delete/cancel): ").lower()
+                "Is this order correct? (Y = save, U = update, D = delete/cancel): ").lower()
             if confirm == "y":
                 order.save()
                 orders.append(order)
-                print("Order saved!")
+                print("Order saved.")
             elif confirm == "u":
                 print("Let's update your order.")
                 order = Paint.from_input(artist, menu)
                 print_label(order)
-                confirm2 = input("Save this updated order? (y/n): ").lower()
+                confirm2 = input("Save this updated order? (Y/N): ").lower()
                 if confirm2 == "y":
                     order.save()
                     orders.append(order)
-                    print("Order saved!")
+                    print("Order saved.")
                 else:
                     print("Order not saved.")
             elif confirm == "d":
