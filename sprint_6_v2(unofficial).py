@@ -1,5 +1,6 @@
 import os
 import datetime  # Import the datetime library to timestamp our reports
+from PaintOrder import PaintOrder
 
 """
 ASSIGNMENT 13B: SPRINT 6
@@ -95,7 +96,8 @@ def calculate_total(order_data):
     tax_amt = subtotal * TAX_RATE
     return subtotal + tax_amt, tax_amt
 
-'''
+# Class
+
 class PaintOrder:
     """A modular blueprint that groups all paint variables into one unit."""
     
@@ -127,11 +129,11 @@ class PaintOrder:
         print("\n--- CURRENT ORDER DETAILS ---")
         print(f"[1] Customer: {self.customer}")
         print(f"[2] Paint Base: {self.paint_base}")
-        print(f"[3] Size:     {self.size}")
+        print(f"[3] Size: {self.size}")
         print(f"[4] Additives: {self.additives}")
         print(f"[5] Additive Parts: {self.additive_parts}")
         print(f"Total: ${self.get_total():.2f}")
-'''
+
 
 def save_data_and_label(customer, location, total, tax):
     """Saves raw data to log and overwrites a human receipt file."""
@@ -145,7 +147,7 @@ def save_data_and_label(customer, location, total, tax):
 
 def print_data_and_label(customer, location, total, tax):
     """Prints the order details."""
-    print(f"ORDER TICKET - {datetime.date.today()} {datetime.datetime.now().strftime('%H:%M:%S')} \n")
+    print(f"ORDER TICKET - {datetime.date.today()} {datetime.datetime.now().strftime('%H:%M:%S')}\n")
     print(f"STUDIO: {location} | ATTN: {customer}")
     print(f"TAX: ${tax:.2f} | TOTAL: ${total:.2f}")
 
@@ -155,7 +157,7 @@ def main():
     final_price, calculated_tax = calculate_total(current_order)
     save_data_and_label(customer=customer, location=location, total=final_price,\
     tax=calculated_tax)
-    print(f"\n Files Updated: {DATA_FILE} and {HUMAN_REPORT}")
+    print(f"\nFiles Updated: {DATA_FILE} and {HUMAN_REPORT}")
     print_data_and_label(customer=customer, location=location, total=final_price,\
     tax=calculated_tax)
 
