@@ -4,11 +4,11 @@ from datetime import datetime
 
 import streamlit as st
 from Artist import Artist
-from PaintMenu import PaintMenu
 from Paint import Paint
+from PaintMenu import PaintMenu
 
 # -------------------------------------------------------------------
-# Configuration / constants
+# Configuration
 # -------------------------------------------------------------------
 
 DB_FILE_PATH = os.path.join(os.path.dirname(__file__), "orders.db")
@@ -64,7 +64,6 @@ def init_db():
             ("paint_base", "Tempera", 0, 0, "Fast-drying matte paint", "", ""),
             ("paint_base", "Gouache", 0, 0, "Opaque watercolor paint", "", ""),
 
-
             # Sizes
             ("size", "Small", 1.50, 0, "", "", ""),
             ("size", "Medium", 2.20, 0, "", "", ""),
@@ -91,7 +90,7 @@ def load_orders():
     """
     Load orders from SQLite database.
     Returns:
-        list[Paint]: List of Paint order objects with attached _id attribute.
+        list[Paint]: List of Paint order objects with attached _id and _quantity.
     """
     init_db()
     conn = sqlite3.connect(DB_FILE_PATH)
@@ -126,7 +125,7 @@ def load_orders():
         timestamp = datetime.fromisoformat(timestamp_str)
 
         order = Paint(artist, paint_base, size, additives, additive_parts)
-        # Attach DB fields
+        # Attach DB-related attributes
         order._id = order_id
         order._Paint__timestamp = timestamp
         order._Paint__cost = cost
