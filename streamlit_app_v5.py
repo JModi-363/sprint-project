@@ -314,29 +314,78 @@ else:
     if action == "Place Order":
         st.header("Place a New Order")
 
+        dup = st.session_state.get("duplicate_order")
+
+        if dup:
+            default_paint_base = dup["paint_base"]
+            default_size = dup["size"]
+            default_additives = dup["additives"]
+            default_parts = dup["additive_parts"]
+            default_quantity = dup["quantity"]
+        else:
+            default_paint_base = None
+            default_size = None
+            default_additives = None
+            default_parts = 0
+            default_quantity = 1
+
+
         with st.form("order_form"):
-            paint_base = st.selectbox("Paint Base", menu.get_paint_base())
+            paint_base = st.selectbox(
+    "Paint Base",
+    menu.get_paint_base(),
+    index=menu.get_paint_base().index(default_paint_base)
+    if default_paint_base in menu.get_paint_base()
+    else 0
+)
+
 
             size_options = size_display_options()
-            size_display = st.selectbox("Size", size_options)
+            size_price_map = get_size_price_map()
+            default_size_display = (
+                f"{default_size} - ${size_price_map[default_size]}"
+                if default_size in size_price_map
+                else size_options[0]
+            )
+
+            size_display = st.selectbox(
+                "Size",
+                size_options,
+                index=size_options.index(default_size_display)
+                if default_size_display in size_options
+                else 0
+            )
+
 
             additives_options = menu.get_additives()
             default_add_index = (
                 additives_options.index("None") if "None" in additives_options else 0
             )
-            additives = st.selectbox("Additives", additives_options, index=default_add_index)
+            additives = st.selectbox(
+    "Additives",
+    additives_options,
+    index=additives_options.index(default_additives)
+    if default_additives in additives_options
+    else default_add_index
+)
 
-            quantity = st.number_input("Quantity", min_value=1, step=1, value=1)
+
+            quantity = st.number_input(
+    "Quantity",
+    min_value=1,
+    step=1,
+    value=default_quantity
+)
 
             show_parts = additives.lower() != "none"
             additive_parts = 0
             if show_parts:
                 additive_parts = st.number_input(
-                    "Additive Parts",
-                    min_value=0,
-                    step=1,
-                    value=0,
-                )
+    "Additive Parts",
+    min_value=0,
+    step=1,
+    value=default_parts
+)
                 if additive_parts > 0:
                     st.write(
                         f"+$0.10 per part. Total additional: ${(additive_parts * 0.10):.2f}"
@@ -359,24 +408,36 @@ else:
             st.session_state.current_order_for_confirmation = (order, quantity)
             st.rerun()
 
-        if st.session_state.current_order_for_confirmation is not None:
-            order, quantity = st.session_state.current_order_for_confirmation
-            st.subheader("Confirm Order")
-            st.code(str(order))
-            st.write(f"Quantity: {quantity}")
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("Confirm and Save"):
-                    save_order(order, quantity=quantity)
-                    st.success("Order saved!")
-                    st.session_state.orders = None
-                    st.session_state.current_order_for_confirmation = None
-                    st.rerun()
-            with col2:
-                if st.button("Cancel Order"):
-                    st.info("Order cancelled.")
-                    st.session_state.current_order_for_confirmation = None
-                    st.rerun()
+    if st.session_state.current_order_for_confirmation is not None:
+        order, quantity = st.session_state.current_order_for_confirmation
+        st.subheader("Confirm Order")
+        st.code(str(order))
+
+        # NEW PRICE BREAKDOWN
+        price_per_item = order.get_cost()
+        total_price = price_per_item * quantity
+
+        st.subheader("Price Breakdown")
+        st.write(f"**Price per item:** ${price_per_item:.2f}")
+        st.write(f"**Total for {quantity} items:** ${total_price:.2f}")
+
+        st.write(f"Quantity: {quantity}")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Confirm and Save"):
+                save_order(order, quantity=quantity)
+                st.session_state.duplicate_order = None
+                st.success("Order saved!")
+                st.rerun()
+
+        with col2:
+            if st.button("Cancel Order"):
+                st.session_state.duplicate_order = None
+                st.info("Order cancelled.")
+                st.rerun()
+
+
 
     # ---------------------- View Orders ----------------------
     elif action == "View Orders":
@@ -405,7 +466,8 @@ else:
 
             st.subheader("Quick Actions")
             for i, order in enumerate(orders):
-                col1, col2, col3 = st.columns([3, 1, 1])
+                col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
+
                 with col1:
                     st.write(f"Order {i+1}: {data[i]['Item']} (Qty: {data[i]['Quantity']})")
                 with col2:
@@ -418,6 +480,18 @@ else:
                         st.session_state.delete_index = i
                         st.session_state.action = "Delete Order"
                         st.rerun()
+                with col4:
+                    if st.button(f"Duplicate {i+1}", key=f"duplicate_{i}"):
+                        st.session_state.duplicate_order = {
+                            "paint_base": order.get_paint_base(),
+                            "size": order.get_size(),
+                            "additives": order.get_additives(),
+                            "additive_parts": order.get_additive_parts(),
+                            "quantity": getattr(order, "_quantity", 1),
+                        }
+                        st.session_state.action = "Place Order"
+                        st.rerun()
+
 
     # ---------------------- Update Order ----------------------
     elif action == "Update Order":
