@@ -308,6 +308,16 @@ else:
         st.session_state.orders = None
         st.rerun()
 
+# -------------------------
+# RESET DATABASE BUTTON
+# -------------------------
+if st.sidebar.button("RESET DATABASE"):
+    if os.path.exists(DB_FILE_PATH):
+        os.remove(DB_FILE_PATH)
+        st.success("Database deleted. Restart the app.")
+    else:
+        st.info("No database file found to delete.")
+
     action = st.session_state.action
 
     # ---------------------- Place Order ----------------------
