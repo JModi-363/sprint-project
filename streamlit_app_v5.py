@@ -42,7 +42,7 @@ def init_db():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS menu_items (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            category TEXT NOT NULL,           -- 'paint_base', 'size', 'additives'
+            category TEXT NOT NULL,
             name TEXT NOT NULL,
             price REAL DEFAULT 0,
             additive_parts INTEGER DEFAULT 0,
@@ -125,7 +125,6 @@ def load_orders():
         timestamp = datetime.fromisoformat(timestamp_str)
 
         order = Paint(artist, paint_base, size, additives, additive_parts)
-        # Attach DB-related attributes
         order._id = order_id
         order._Paint__timestamp = timestamp
         order._Paint__cost = cost
@@ -250,7 +249,7 @@ if "delete_index" not in st.session_state:
 # -------------------------------------------------------------------
 
 def size_display_options():
-    raw_sizes = menu.get_size()  # e.g. ["Small: 1.50", ...]
+    raw_sizes = menu.get_size()
     options = []
     for s in raw_sizes:
         name, price = [x.strip() for x in s.split(":")]
@@ -259,7 +258,6 @@ def size_display_options():
 
 
 def parse_size_name(display_value: str) -> str:
-    # "Small - $1.50" -> "Small"
     return display_value.split(" - ")[0]
 
 
@@ -293,7 +291,6 @@ if st.session_state.artist is None:
             else:
                 st.error("Please fill all fields.")
 else:
-    # Sidebar navigation
     st.sidebar.header("Navigation")
     if st.sidebar.button("Place Order"):
         st.session_state.action = "Place Order"
@@ -313,9 +310,7 @@ else:
 
     action = st.session_state.action
 
-    # ---------------------------------------------------------------
-    # Place Order
-    # ---------------------------------------------------------------
+    # ---------------------- Place Order ----------------------
     if action == "Place Order":
         st.header("Place a New Order")
 
@@ -364,7 +359,6 @@ else:
             st.session_state.current_order_for_confirmation = (order, quantity)
             st.rerun()
 
-        # Confirmation step
         if st.session_state.current_order_for_confirmation is not None:
             order, quantity = st.session_state.current_order_for_confirmation
             st.subheader("Confirm Order")
@@ -384,9 +378,7 @@ else:
                     st.session_state.current_order_for_confirmation = None
                     st.rerun()
 
-    # ---------------------------------------------------------------
-    # View Orders
-    # ---------------------------------------------------------------
+    # ---------------------- View Orders ----------------------
     elif action == "View Orders":
         st.header("View Orders")
 
@@ -427,9 +419,7 @@ else:
                         st.session_state.action = "Delete Order"
                         st.rerun()
 
-    # ---------------------------------------------------------------
-    # Update Order
-    # ---------------------------------------------------------------
+    # ---------------------- Update Order ----------------------
     elif action == "Update Order":
         st.header("Update Order")
 
@@ -530,9 +520,7 @@ else:
                             st.session_state.edit_index = None
                             st.rerun()
 
-    # ---------------------------------------------------------------
-    # Delete Order
-    # ---------------------------------------------------------------
+    # ---------------------- Delete Order ----------------------
     elif action == "Delete Order":
         st.header("Delete Order")
 
