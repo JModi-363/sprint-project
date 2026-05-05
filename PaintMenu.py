@@ -1,35 +1,19 @@
-"""
-    Menu Class
-    Reads menu.txt and stores each section as a list of strings.
-    This is an example of a class that handles file reading
-    and organizes data into easy-to-use attributes.
-"""
-import os
-
+import sqlite3
 
 class PaintMenu:
     """
-    A Menu object holds all the menu sections for Monty's Coffee.
-    Each section is stored as a list of strings.
-
-    Example usage:
-        menu = Menu.from_file("menu.txt")
-        print(menu.coffee)   # ['Espresso', 'Americano', ...]
-        print(menu.prices)   # ['Small: 3.00', 'Medium: 4.00', ...]
+    PaintMenu loads paint bases, sizes, and additives from the database.
     """
 
-    def __init__(self, paint_base, size, additives, additive_parts):
-        """
-        The constructor sets up all the menu sections as attributes.
-        Each attribute is a list of strings.
-        'self' refers to this specific Menu object.
-        """
-        self.paint_base = paint_base    # List of paint base types
-        self.size = size    # List of sizes and prices e.g. 'Small: 3.00'
-        self.additives = additives      # List of additive options
-        self.additive_parts = additive_parts      # List of pump options e.g. 'Light: 3'
+    def __init__(self, paint_base, size, additives, additive_parts=None):
+        self.paint_base = paint_base            # list[str]
+        self.size = size                        # list[str] like "Small: 1.50"
+        self.additives = additives              # list[str]
+        self.additive_parts = additive_parts or []  # optional list
 
-    # --- Getter methods for OOP encapsulation ---
+    # -------------------------
+    # Getter methods
+    # -------------------------
     def get_paint_base(self):
         return self.paint_base
 
@@ -42,116 +26,48 @@ class PaintMenu:
     def get_additive_parts(self):
         return self.additive_parts
 
-@classmethod
-def from_db(cls, db_path):
-    import sqlite3
-
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-
-    def fetch(category):
-        cursor.execute(
-            "SELECT name, price FROM menu_items WHERE category = ?",
-            (category,)
-        )
-        return cursor.fetchall()
-
-    paint_base = [row[0] for row in fetch("paint_base")]
-
-    size_rows = fetch("size")
-    size = [f"{name}: {price:.2f}" for name, price in size_rows]
-
-    additives = [row[0] for row in fetch("additives")]
-
-    conn.close()
-
-    return cls(
-        paint_base=paint_base,
-        size=size,
-        additives=additives,
-        additive_parts=[]
-    )
-'''
+    # -------------------------
+    # Load menu from SQLite DB
+    # -------------------------
     @classmethod
-    def from_file(cls, filename="paint_menu.txt"):
-        """
-        A classmethod that reads menu.txt and creates a Menu object.
-        Each line in the file looks like:
-            COFFEE ; Espresso, Americano, Latte, ...
-        We split on ';' to get the header and the items,
-        then split the items on ',' to get a list of strings.
+    def from_db(cls, db_path):
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
 
-        Usage:
-            menu = Menu.from_file("menu.txt")
-        """
-        # Start with empty lists for each section
-        menus = {}
-
-        try:
-            # If the file doesn't exist, create it with default content
-            if not os.path.exists(filename):
-                with open(filename, 'w') as f:
-                    f.write("BASES ; Acrylic, Oil, Watercolor, Tempera, Gouache\n")
-                    f.write("PRICES ; Small: 1.50, Medium: 2.20, Large: 3.00\n")
-                    f.write("ADDITIVES ; Thickener, Antioxidant, Hardener, Extender, None")
-                print(f"Created default '{filename}'. Please customize it.")
-
-            with open(filename, 'r') as file:
-                for line in file:
-                    # Skip blank lines
-                    if ';' not in line:
-                        continue
-
-                    # Split each line into header and items
-                    parts = line.strip().split(';')
-                    header = parts[0].strip().upper()
-                    # Split items by comma and strip extra spaces
-                    items = [item.strip() for item in parts[1].split(',')]
-                    menus[header] = items
-
-            # Build and return the Menu object.
-            # Accept a few common header synonyms from the data file.
-            paint_base = menus.get("PAINT_BASE") or menus.get("BASES") or []
-            size = menus.get("SIZE") or menus.get("PRICES") or []
-            additives = menus.get("ADDITIVES") or []
-            additive_parts = (
-                menus.get("ADDITIVE_PARTS")
-                or menus.get("PUMP_LEVELS")
-                or []
+        # Helper to fetch rows by category
+        def fetch(category):
+            cursor.execute(
+                "SELECT name, price FROM menu_items WHERE category = ?",
+                (category,)
             )
-            return cls(
-                paint_base=paint_base,
-                size=size,
-                additives=additives,
-                additive_parts=additive_parts,
-            )
+            return cursor.fetchall()
 
-        except FileNotFoundError:
-            print(f"Error: '{filename}' was not found.")
-            return None
-        except Exception as e:
-            print(f"An error occurred reading the menu: {e}")
-            return None
+        # Paint bases (no price)
+        paint_base = [row[0] for row in fetch("paint_base")]
 
+        # Sizes (name + price)
+        size_rows = fetch("size")
+        size = [f"{name}: {price:.2f}" for name, price in size_rows]
+
+        # Additives (no price)
+        additives = [row[0] for row in fetch("additives")]
+
+        conn.close()
+
+        return cls(
+            paint_base=paint_base,
+            size=size,
+            additives=additives,
+            additive_parts=[]
+        )
+
+    # -------------------------
+    # String representation
+    # -------------------------
     def __str__(self):
-        """
-        Defines what prints when you do print(menu).
-        Lists each section and its options.
-        """
         return (
-            f"Paint Base:  {self.paint_base}\n"
-            f"Size:  {self.size}\n"
-            f"Additives:   {self.additives}\n"
+            f"Paint Base: {self.paint_base}\n"
+            f"Size: {self.size}\n"
+            f"Additives: {self.additives}\n"
             f"Additive Parts: {self.additive_parts}"
         )
-'''
-'''
-# Quick test - only runs if you run PaintMenu.py directly
-if __name__ == "__main__":
-    # Use a robust path to menu.txt in the same folder as this script
-    script_dir = os.path.dirname(__file__)
-    menu_file_path = os.path.join(script_dir, "paint_menu.txt")
-    menu = PaintMenu.from_file(menu_file_path)
-    if menu:
-        print(menu)
-'''
