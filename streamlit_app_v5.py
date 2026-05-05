@@ -61,6 +61,9 @@ def init_db():
             ("paint_base", "Acrylic", 0, 0, "Fast-drying synthetic paint", "", ""),
             ("paint_base", "Oil", 0, 0, "Slow-drying rich paint", "", ""),
             ("paint_base", "Watercolor", 0, 0, "Transparent water-based paint", "", ""),
+            ("paint_base", "Tempera", 0, 0, "Fast-drying matte paint", "", ""),
+            ("paint_base", "Gouache", 0, 0, "Opaque watercolor paint", "", ""),
+
 
             # Sizes
             ("size", "Small", 1.50, 0, "", "", ""),
