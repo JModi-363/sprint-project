@@ -42,6 +42,36 @@ class PaintMenu:
     def get_additive_parts(self):
         return self.additive_parts
 
+@classmethod
+def from_db(cls, db_path):
+    import sqlite3
+
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    def fetch(category):
+        cursor.execute(
+            "SELECT name, price FROM menu_items WHERE category = ?",
+            (category,)
+        )
+        return cursor.fetchall()
+
+    paint_base = [row[0] for row in fetch("paint_base")]
+
+    size_rows = fetch("size")
+    size = [f"{name}: {price:.2f}" for name, price in size_rows]
+
+    additives = [row[0] for row in fetch("additives")]
+
+    conn.close()
+
+    return cls(
+        paint_base=paint_base,
+        size=size,
+        additives=additives,
+        additive_parts=[]
+    )
+'''
     @classmethod
     def from_file(cls, filename="paint_menu.txt"):
         """
@@ -58,6 +88,14 @@ class PaintMenu:
         menus = {}
 
         try:
+            # If the file doesn't exist, create it with default content
+            if not os.path.exists(filename):
+                with open(filename, 'w') as f:
+                    f.write("BASES ; Acrylic, Oil, Watercolor, Tempera, Gouache\n")
+                    f.write("PRICES ; Small: 1.50, Medium: 2.20, Large: 3.00\n")
+                    f.write("ADDITIVES ; Thickener, Antioxidant, Hardener, Extender, None")
+                print(f"Created default '{filename}'. Please customize it.")
+
             with open(filename, 'r') as file:
                 for line in file:
                     # Skip blank lines
@@ -106,7 +144,7 @@ class PaintMenu:
             f"Additives:   {self.additives}\n"
             f"Additive Parts: {self.additive_parts}"
         )
-
+'''
 '''
 # Quick test - only runs if you run PaintMenu.py directly
 if __name__ == "__main__":
