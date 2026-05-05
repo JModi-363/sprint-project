@@ -407,35 +407,35 @@ else:
             order.calculate_cost(menu)
             st.session_state.current_order_for_confirmation = (order, quantity)
             st.rerun()
-            
-    if st.session_state.current_order_for_confirmation is not None:
-        order, quantity = st.session_state.current_order_for_confirmation
-        st.subheader("Confirm Order")
-        st.code(str(order))
 
-        # NEW PRICE BREAKDOWN
-        price_per_item = order.get_cost()
-        total_price = price_per_item * quantity
+        if st.session_state.current_order_for_confirmation is not None:
+            order, quantity = st.session_state.current_order_for_confirmation
+            st.subheader("Confirm Order")
+            st.code(str(order))
 
-        st.subheader("Price Breakdown")
-        st.write(f"**Price per item:** ${price_per_item:.2f}")
-        st.write(f"**Total for {quantity} items:** ${total_price:.2f}")
+            # NEW PRICE BREAKDOWN
+            price_per_item = order.get_cost()
+            total_price = price_per_item * quantity
 
-        st.write(f"Quantity: {quantity}")
+            st.subheader("Price Breakdown")
+            st.write(f"**Price per item:** ${price_per_item:.2f}")
+            st.write(f"**Total for {quantity} items:** ${total_price:.2f}")
 
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Confirm and Save"):
-                save_order(order, quantity=quantity)
-                st.session_state.duplicate_order = None
-                st.success("Order saved!")
-                st.rerun()
+            st.write(f"Quantity: {quantity}")
 
-        with col2:
-            if st.button("Cancel Order"):
-                st.session_state.duplicate_order = None
-                st.info("Order cancelled.")
-                st.rerun()
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Confirm and Save"):
+                    save_order(order, quantity=quantity)
+                    st.session_state.duplicate_order = None
+                    st.success("Order saved!")
+                    st.rerun()
+
+            with col2:
+                if st.button("Cancel Order"):
+                    st.session_state.duplicate_order = None
+                    st.info("Order cancelled.")
+                    st.rerun()
 
 
     # ---------------------- View Orders ----------------------
