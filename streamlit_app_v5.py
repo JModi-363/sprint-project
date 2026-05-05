@@ -407,7 +407,7 @@ else:
             order.calculate_cost(menu)
             st.session_state.current_order_for_confirmation = (order, quantity)
             st.rerun()
-
+            
     if st.session_state.current_order_for_confirmation is not None:
         order, quantity = st.session_state.current_order_for_confirmation
         st.subheader("Confirm Order")
@@ -436,7 +436,6 @@ else:
                 st.session_state.duplicate_order = None
                 st.info("Order cancelled.")
                 st.rerun()
-
 
 
     # ---------------------- View Orders ----------------------
