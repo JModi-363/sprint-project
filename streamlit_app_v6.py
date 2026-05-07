@@ -409,15 +409,6 @@ else:
                 else 0
             )
 
-            # --- METADATA FOR PAINT BASE ---
-            # Look up metadata for the selected paint base and display it
-            meta = menu.get_metadata("paint_base", paint_base)
-            if meta:
-                st.info(
-                    f"**Description:** {meta['description']}\n\n"
-                    f"**Sustainability:** {meta['sustainability_info']}"
-                )
-
             # Size selection (with price in label)
             size_options = size_display_options()
             size_price_map = get_size_price_map()
@@ -448,15 +439,6 @@ else:
                 else default_add_index
             )
 
-            # --- METADATA FOR ADDITIVES ---
-            # Look up metadata for the selected additive and display it
-            meta = menu.get_metadata("additives", additives)
-            if meta:
-                st.info(
-                    f"**Description:** {meta['description']}\n\n"
-                    f"**Sustainability:** {meta['sustainability_info']}"
-                )
-
             # Quantity of items to order
             quantity = st.number_input(
                 "Quantity",
@@ -483,73 +465,40 @@ else:
                 else:
                     st.write("+$0.10 per part.")
 
+
             # Submit button to review the order before saving
             submitted = st.form_submit_button("Review Order")
 
-        # --- LIVE METADATA: Paint Base ---
-        meta_base = menu.get_metadata("paint_base", paint_base)
-        if meta_base:
-            st.info(
-                f"**Description:** {meta_base['description']}\n\n"
-                f"**Sustainability:** {meta_base['sustainability_info']}"
-            )
+            # --- LIVE METADATA: Paint Base ---
+            meta_base = menu.get_metadata("paint_base", paint_base)
+            if meta_base:
+                st.info(
+                    f"**Description:** {meta_base['description']}\n\n"
+                    f"**Sustainability:** {meta_base['sustainability_info']}"
+                )
 
-        # --- LIVE METADATA: Additives ---
-        meta_add = menu.get_metadata("additives", additives)
-        if meta_add:
-            st.info(
-                f"**Description:** {meta_add['description']}\n\n"
-                f"**Sustainability:** {meta_add['sustainability_info']}"
-            )
+            # --- LIVE METADATA: Additives ---
+            meta_add = menu.get_metadata("additives", additives)
+            if meta_add:
+                st.info(
+                    f"**Description:** {meta_add['description']}\n\n"
+                    f"**Sustainability:** {meta_add['sustainability_info']}"
+                )
 
-        # After form submission, build Paint object and move to confirmation step
-        if submitted:
-            size_name = parse_size_name(size_display)  # Extract size name from display
-            order = Paint(
-                st.session_state.artist,
-                paint_base,
-                size_name,
-                additives,
-                additive_parts
-            )
-            order.calculate_cost(menu)  # Compute cost based on menu prices
-            # Store order + quantity in session for confirmation step
-            st.session_state.current_order_for_confirmation = (order, quantity)
-            st.rerun()
+            # After form submission, build Paint object and move to confirmation step
+            if submitted:
+                size_name = parse_size_name(size_display)
+                order = Paint(
+                    st.session_state.artist,
+                    paint_base,
+                    size_name,
+                    additives,
+                    additive_parts
+                )
+                order.calculate_cost(menu)
+                st.session_state.current_order_for_confirmation = (order, quantity)
+                st.rerun()
 
-        # If there is an order awaiting confirmation, show confirmation UI
-        if st.session_state.current_order_for_confirmation is not None:
-            order, quantity = st.session_state.current_order_for_confirmation
-            st.subheader("Confirm Order")
-            st.code(str(order))  # Show textual representation of the order
-
-            # NEW PRICE BREAKDOWN: show per-item and total cost
-            price_per_item = order.get_cost()
-            total_price = price_per_item * quantity
-
-            st.subheader("Price Breakdown")
-            st.write(f"**Price per item:** ${price_per_item:.2f}")
-            st.write(f"**Total for {quantity} items:** ${total_price:.2f}")
-
-            st.write(f"Quantity: {quantity}")
-
-            # Two-column layout for Confirm and Cancel buttons
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("Confirm and Save"):
-                    # Save order to DB with chosen quantity
-                    save_order(order, quantity=quantity)
-                    # Clear duplicate_order state after saving
-                    st.session_state.duplicate_order = None
-                    st.success("Order saved!")
-                    st.rerun()
-
-            with col2:
-                if st.button("Cancel Order"):
-                    # Cancel current confirmation and clear duplicate state
-                    st.session_state.duplicate_order = None
-                    st.info("Order cancelled.")
-                    st.rerun()
 
     # ---------------------- View Orders ----------------------
     elif action == "View Orders":
