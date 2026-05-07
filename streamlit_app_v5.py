@@ -86,9 +86,9 @@ def init_db():
     conn.close()
 
 
-def load_orders():
+def load_orders(search_artist: str = "", filter_paint_base: str = ""):
     """
-    Load orders from SQLite database.
+    Load orders from SQLite database with optional filtering.
     Returns:
         list[Paint]: List of Paint order objects with attached _id and _quantity.
     """
@@ -96,12 +96,26 @@ def load_orders():
     conn = sqlite3.connect(DB_FILE_PATH)
     cursor = conn.cursor()
 
-    cursor.execute("""
+    query = """
         SELECT id, artist_fname, artist_lname, location, timestamp,
                paint_base, size, additives, additive_parts, cost, quantity
         FROM orders
-        ORDER BY datetime(timestamp) DESC
-    """)
+        WHERE 1=1
+    """
+    params = []
+
+    if search_artist:
+        query += " AND (artist_fname LIKE ? OR artist_lname LIKE ?)"
+        params.append(f"%{search_artist}%")
+        params.append(f"%{search_artist}%")
+
+    if filter_paint_base and filter_paint_base != "All":
+        query += " AND paint_base = ?"
+        params.append(filter_paint_base)
+
+    query += " ORDER BY datetime(timestamp) DESC"
+
+    cursor.execute(query, params)
     rows = cursor.fetchall()
     conn.close()
 
