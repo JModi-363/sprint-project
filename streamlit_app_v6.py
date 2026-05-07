@@ -470,71 +470,71 @@ else:
             submitted = st.form_submit_button("Review Order")
 
 # --- LIVE METADATA: Paint Base ---
-meta_base = menu.get_metadata("paint_base", paint_base)
-if meta_base:
-    st.info(
-        f"**Description:** {meta_base['description']}\n\n"
-        f"**Sustainability:** {meta_base['sustainability_info']}"
-    )
+        meta_base = menu.get_metadata("paint_base", paint_base)
+        if meta_base:
+            st.info(
+                f"**Description:** {meta_base['description']}\n\n"
+                f"**Sustainability:** {meta_base['sustainability_info']}"
+            )
 
-# --- LIVE METADATA: Additives ---
-meta_add = menu.get_metadata("additives", additives)
-if meta_add:
-    st.info(
-        f"**Description:** {meta_add['description']}\n\n"
-        f"**Sustainability:** {meta_add['sustainability_info']}"
-    )
+        # --- LIVE METADATA: Additives ---
+        meta_add = menu.get_metadata("additives", additives)
+        if meta_add:
+            st.info(
+                f"**Description:** {meta_add['description']}\n\n"
+                f"**Sustainability:** {meta_add['sustainability_info']}"
+            )
 
 # After form submission, build Paint object and move to confirmation step
-if submitted:
-    size_name = parse_size_name(size_display)
-    order = Paint(
-        st.session_state.artist,
-        paint_base,
-        size_name,
-        additives,
-        additive_parts
-    )
-    order.calculate_cost(menu)
-    st.session_state.current_order_for_confirmation = (order, quantity)
-    st.rerun()
+        if submitted:
+            size_name = parse_size_name(size_display)
+            order = Paint(
+                st.session_state.artist,
+                paint_base,
+                size_name,
+                additives,
+                additive_parts
+            )
+            order.calculate_cost(menu)
+            st.session_state.current_order_for_confirmation = (order, quantity)
+            st.rerun()
 
 
 
-    # ---------------------- View Orders ----------------------
-    elif action == "View Orders":
-        st.header("View Orders")
+        # ---------------------- View Orders ----------------------
+        elif action == "View Orders":
+            st.header("View Orders")
 
-        # --- FILTER UI ---
-        # Text input to filter by artist name (first or last)
-        search_artist = st.text_input("Search by artist name")
+            # --- FILTER UI ---
+            # Text input to filter by artist name (first or last)
+            search_artist = st.text_input("Search by artist name")
 
-        # Build list of unique paint bases from current DB for filter dropdown
-        all_orders_for_filter = load_orders()  # Load all orders without filters
-        unique_bases = sorted(list({o.get_paint_base() for o in all_orders_for_filter}))
-        filter_paint_base = st.selectbox("Filter by paint base", ["All"] + unique_bases)
+            # Build list of unique paint bases from current DB for filter dropdown
+            all_orders_for_filter = load_orders()  # Load all orders without filters
+            unique_bases = sorted(list({o.get_paint_base() for o in all_orders_for_filter}))
+            filter_paint_base = st.selectbox("Filter by paint base", ["All"] + unique_bases)
 
-        # Load orders using the selected filters
-        orders = load_orders(search_artist, filter_paint_base)
+            # Load orders using the selected filters
+            orders = load_orders(search_artist, filter_paint_base)
 
-        if not orders:
-            # If no orders match filters, offer to place a new one
-            st.info("No orders found. Would you like to place a new order?")
-            if st.button("Place Order"):
-                st.session_state.action = "Place Order"
-                st.rerun()
-        else:
-            # Build a simple table representation of orders for display
-            data = []
-            for order in orders:
-                item = f"{order.get_size()} {order.get_paint_base()} - {order.get_additives()} ({order.get_additive_parts()})"
-                data.append({
-                    "Timestamp": order.get_timestamp().strftime("%Y-%m-%d %I:%M %p"),
-                    "Item": item,
-                    "Cost": f"${order.get_cost():.2f}",
-                    "Quantity": getattr(order, "_quantity", 1),
-                    "Artist": f"{order.get_artist().get_fname()} {order.get_artist().get_lname()}",
-                })
+            if not orders:
+                # If no orders match filters, offer to place a new one
+                st.info("No orders found. Would you like to place a new order?")
+                if st.button("Place Order"):
+                    st.session_state.action = "Place Order"
+                    st.rerun()
+            else:
+                # Build a simple table representation of orders for display
+                data = []
+                for order in orders:
+                    item = f"{order.get_size()} {order.get_paint_base()} - {order.get_additives()} ({order.get_additive_parts()})"
+                    data.append({
+                        "Timestamp": order.get_timestamp().strftime("%Y-%m-%d %I:%M %p"),
+                        "Item": item,
+                        "Cost": f"${order.get_cost():.2f}",
+                        "Quantity": getattr(order, "_quantity", 1),
+                        "Artist": f"{order.get_artist().get_fname()} {order.get_artist().get_lname()}",
+                    })
 
             # Show orders in a dataframe
             st.dataframe(data)
