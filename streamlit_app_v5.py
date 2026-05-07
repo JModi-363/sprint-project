@@ -344,105 +344,97 @@ else:
             default_quantity = 1
 
 
-        with st.form("order_form"):
-            paint_base = st.selectbox(
-                "Paint Base",
-                menu.get_paint_base(),
-                index=menu.get_paint_base().index(default_paint_base)
-                if default_paint_base in menu.get_paint_base()
-                else 0
+with st.form("order_form"):
+    paint_base = st.selectbox(
+        "Paint Base",
+        menu.get_paint_base(),
+        index=menu.get_paint_base().index(default_paint_base)
+        if default_paint_base in menu.get_paint_base()
+        else 0
+    )
+
+    # --- METADATA FOR PAINT BASE ---
+    meta = menu.get_metadata("paint_base", paint_base)
+    if meta:
+        st.info(
+            f"**Description:** {meta['description']}\n\n"
+            f"**Sustainability:** {meta['sustainability_info']}"
+        )
+
+    size_options = size_display_options()
+    size_price_map = get_size_price_map()
+    default_size_display = (
+        f"{default_size} - ${size_price_map[default_size]}"
+        if default_size in size_price_map
+        else size_options[0]
+    )
+
+    size_display = st.selectbox(
+        "Size",
+        size_options,
+        index=size_options.index(default_size_display)
+        if default_size_display in size_options
+        else 0
+    )
+
+    additives_options = menu.get_additives()
+    default_add_index = (
+        additives_options.index("None") if "None" in additives_options else 0
+    )
+    additives = st.selectbox(
+        "Additives",
+        additives_options,
+        index=additives_options.index(default_additives)
+        if default_additives in additives_options
+        else default_add_index
+    )
+
+    # --- METADATA FOR ADDITIVES ---
+    meta = menu.get_metadata("additives", additives)
+    if meta:
+        st.info(
+            f"**Description:** {meta['description']}\n\n"
+            f"**Sustainability:** {meta['sustainability_info']}"
+        )
+
+    quantity = st.number_input(
+        "Quantity",
+        min_value=1,
+        step=1,
+        value=default_quantity
+    )
+
+    show_parts = additives.lower() != "none"
+    additive_parts = 0
+    if show_parts:
+        additive_parts = st.number_input(
+            "Additive Parts",
+            min_value=0,
+            step=1,
+            value=default_parts
+        )
+        if additive_parts > 0:
+            st.write(
+                f"+$0.10 per part. Total additional: ${(additive_parts * 0.10):.2f}"
             )
-                # --- METADATA FOR PAINT BASE ---
-            meta = menu.get_metadata("paint_base", paint_base)
-            if meta:
-                st.info(
-                    f"**Description:** {meta['description']}\n\n"
-                    f"**Sustainability:** {meta['sustainability_info']}"
-                )
+        else:
+            st.write("+$0.10 per part.")
 
-    "Paint Base",
-    menu.get_paint_base(),
-    index=menu.get_paint_base().index(default_paint_base)
-    if default_paint_base in menu.get_paint_base()
-    else 0
-                )
+    submitted = st.form_submit_button("Review Order")
 
+if submitted:
+    size_name = parse_size_name(size_display)
+    order = Paint(
+        st.session_state.artist,
+        paint_base,
+        size_name,
+        additives,
+        additive_parts
+    )
+    order.calculate_cost(menu)
+    st.session_state.current_order_for_confirmation = (order, quantity)
+    st.rerun()
 
-            size_options = size_display_options()
-            size_price_map = get_size_price_map()
-            default_size_display = (
-                f"{default_size} - ${size_price_map[default_size]}"
-                if default_size in size_price_map
-                else size_options[0]
-            )
-
-            size_display = st.selectbox(
-                "Size",
-                size_options,
-                index=size_options.index(default_size_display)
-                if default_size_display in size_options
-                else 0
-            )
-
-
-            additives_options = menu.get_additives()
-            default_add_index = (
-                additives_options.index("None") if "None" in additives_options else 0
-            )
-            additives = st.selectbox(
-    "Additives",
-    additives_options,
-    index=additives_options.index(default_additives)
-    if default_additives in additives_options
-    else default_add_index
-)
-
-            # --- METADATA FOR ADDITIVES ---
-            meta = menu.get_metadata("additives", additives)
-            if meta:
-                st.info(
-                    f"**Description:** {meta['description']}\n\n"
-                    f"**Sustainability:** {meta['sustainability_info']}"
-                )
-
-
-            quantity = st.number_input(
-    "Quantity",
-    min_value=1,
-    step=1,
-    value=default_quantity
-)
-
-            show_parts = additives.lower() != "none"
-            additive_parts = 0
-            if show_parts:
-                additive_parts = st.number_input(
-    "Additive Parts",
-    min_value=0,
-    step=1,
-    value=default_parts
-)
-                if additive_parts > 0:
-                    st.write(
-                        f"+$0.10 per part. Total additional: ${(additive_parts * 0.10):.2f}"
-                    )
-                else:
-                    st.write("+$0.10 per part.")
-
-            submitted = st.form_submit_button("Review Order")
-
-            if submitted:
-                size_name = parse_size_name(size_display)
-                order = Paint(
-                    st.session_state.artist,
-                    paint_base,
-                    size_name,
-                    additives,
-                    additive_parts
-                )
-                order.calculate_cost(menu)
-            st.session_state.current_order_for_confirmation = (order, quantity)
-            st.rerun()
 
         if st.session_state.current_order_for_confirmation is not None:
             order, quantity = st.session_state.current_order_for_confirmation
