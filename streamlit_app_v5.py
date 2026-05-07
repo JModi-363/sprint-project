@@ -589,6 +589,15 @@ else:
                         if order.get_paint_base() in menu.get_paint_base() else 0,
                     )
 
+                    # --- METADATA FOR PAINT BASE ---
+                    meta = menu.get_metadata("paint_base", paint_base)
+                    if meta:
+                        st.info(
+                            f"**Description:** {meta['description']}\n\n"
+                            f"**Sustainability:** {meta['sustainability_info']}"
+                        )
+
+
                     size_index = size_options.index(current_size_display) if current_size_display in size_options else 0
                     size_display = st.selectbox("Size", size_options, index=size_index)
 
@@ -599,6 +608,15 @@ else:
                         else (additives_options.index("None") if "None" in additives_options else 0)
                     )
                     additives = st.selectbox("Additives", additives_options, index=add_index)
+
+                    # --- METADATA FOR ADDITIVES ---
+                    meta = menu.get_metadata("additives", additives)
+                    if meta:
+                        st.info(
+                            f"**Description:** {meta['description']}\n\n"
+                            f"**Sustainability:** {meta['sustainability_info']}"
+                        )
+
 
                     quantity = st.number_input(
                         "Quantity",
