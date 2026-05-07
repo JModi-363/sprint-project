@@ -469,35 +469,36 @@ else:
             # Submit button to review the order before saving
             submitted = st.form_submit_button("Review Order")
 
-            # --- LIVE METADATA: Paint Base ---
-            meta_base = menu.get_metadata("paint_base", paint_base)
-            if meta_base:
-                st.info(
-                    f"**Description:** {meta_base['description']}\n\n"
-                    f"**Sustainability:** {meta_base['sustainability_info']}"
-                )
+# --- LIVE METADATA: Paint Base ---
+meta_base = menu.get_metadata("paint_base", paint_base)
+if meta_base:
+    st.info(
+        f"**Description:** {meta_base['description']}\n\n"
+        f"**Sustainability:** {meta_base['sustainability_info']}"
+    )
 
-            # --- LIVE METADATA: Additives ---
-            meta_add = menu.get_metadata("additives", additives)
-            if meta_add:
-                st.info(
-                    f"**Description:** {meta_add['description']}\n\n"
-                    f"**Sustainability:** {meta_add['sustainability_info']}"
-                )
+# --- LIVE METADATA: Additives ---
+meta_add = menu.get_metadata("additives", additives)
+if meta_add:
+    st.info(
+        f"**Description:** {meta_add['description']}\n\n"
+        f"**Sustainability:** {meta_add['sustainability_info']}"
+    )
 
-            # After form submission, build Paint object and move to confirmation step
-            if submitted:
-                size_name = parse_size_name(size_display)
-                order = Paint(
-                    st.session_state.artist,
-                    paint_base,
-                    size_name,
-                    additives,
-                    additive_parts
-                )
-                order.calculate_cost(menu)
-                st.session_state.current_order_for_confirmation = (order, quantity)
-                st.rerun()
+# After form submission, build Paint object and move to confirmation step
+if submitted:
+    size_name = parse_size_name(size_display)
+    order = Paint(
+        st.session_state.artist,
+        paint_base,
+        size_name,
+        additives,
+        additive_parts
+    )
+    order.calculate_cost(menu)
+    st.session_state.current_order_for_confirmation = (order, quantity)
+    st.rerun()
+
 
 
     # ---------------------- View Orders ----------------------
