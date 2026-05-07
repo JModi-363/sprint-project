@@ -346,12 +346,26 @@ else:
 
         with st.form("order_form"):
             paint_base = st.selectbox(
+                "Paint Base",
+                menu.get_paint_base(),
+                index=menu.get_paint_base().index(default_paint_base)
+                if default_paint_base in menu.get_paint_base()
+                else 0
+            )
+                # --- METADATA FOR PAINT BASE ---
+            meta = menu.get_metadata("paint_base", paint_base)
+            if meta:
+                st.info(
+                    f"**Description:** {meta['description']}\n\n"
+                    f"**Sustainability:** {meta['sustainability_info']}"
+                )
+
     "Paint Base",
     menu.get_paint_base(),
     index=menu.get_paint_base().index(default_paint_base)
     if default_paint_base in menu.get_paint_base()
     else 0
-)
+                )
 
 
             size_options = size_display_options()
@@ -383,6 +397,14 @@ else:
     else default_add_index
 )
 
+            # --- METADATA FOR ADDITIVES ---
+            meta = menu.get_metadata("additives", additives)
+            if meta:
+                st.info(
+                    f"**Description:** {meta['description']}\n\n"
+                    f"**Sustainability:** {meta['sustainability_info']}"
+                )
+
 
             quantity = st.number_input(
     "Quantity",
@@ -409,16 +431,16 @@ else:
 
             submitted = st.form_submit_button("Review Order")
 
-        if submitted:
-            size_name = parse_size_name(size_display)
-            order = Paint(
-                st.session_state.artist,
-                paint_base,
-                size_name,
-                additives,
-                additive_parts,
-            )
-            order.calculate_cost(menu)
+            if submitted:
+                size_name = parse_size_name(size_display)
+                order = Paint(
+                    st.session_state.artist,
+                    paint_base,
+                    size_name,
+                    additives,
+                    additive_parts
+                )
+                order.calculate_cost(menu)
             st.session_state.current_order_for_confirmation = (order, quantity)
             st.rerun()
 
@@ -456,7 +478,17 @@ else:
     elif action == "View Orders":
         st.header("View Orders")
 
-        orders = st.session_state.orders or load_orders()
+        # --- FILTER UI ---
+        search_artist = st.text_input("Search by artist name")
+
+        # Build list of unique paint bases from current DB
+        all_orders_for_filter = load_orders()  # load without filters
+        unique_bases = sorted(list({o.get_paint_base() for o in all_orders_for_filter}))
+        filter_paint_base = st.selectbox("Filter by paint base", ["All"] + unique_bases)
+
+        # Load filtered orders
+        orders = load_orders(search_artist, filter_paint_base)
+
 
         if not orders:
             st.info("No orders found. Would you like to place a new order?")
@@ -476,6 +508,26 @@ else:
                 })
 
             st.dataframe(data)
+
+            # --- BASIC REPORTING SECTION ---
+
+            st.subheader("Summary & Reporting")
+
+            # Total number of displayed orders
+            st.metric("Total Orders Displayed", len(orders))
+
+            # Build summary of paint bases and total quantities
+            summary = {}
+            for order in orders:
+                base = order.get_paint_base()
+                qty = getattr(order, "_quantity", 1)
+                summary[base] = summary.get(base, 0) + qty
+            
+            # Convert summary to a table-friendly format
+            summary_rows = [{"Paint Base": base, "Total Units": qty} for base, qty in summary.items()]
+
+            st.dataframe(summary_rows)
+
 
             st.subheader("Quick Actions")
             for i, order in enumerate(orders):
