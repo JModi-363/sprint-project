@@ -486,6 +486,22 @@ else:
             # Submit button to review the order before saving
             submitted = st.form_submit_button("Review Order")
 
+        # --- LIVE METADATA: Paint Base ---
+        meta_base = menu.get_metadata("paint_base", paint_base)
+        if meta_base:
+            st.info(
+                f"**Description:** {meta_base['description']}\n\n"
+                f"**Sustainability:** {meta_base['sustainability_info']}"
+            )
+
+        # --- LIVE METADATA: Additives ---
+        meta_add = menu.get_metadata("additives", additives)
+        if meta_add:
+            st.info(
+                f"**Description:** {meta_add['description']}\n\n"
+                f"**Sustainability:** {meta_add['sustainability_info']}"
+            )
+
         # After form submission, build Paint object and move to confirmation step
         if submitted:
             size_name = parse_size_name(size_display)  # Extract size name from display
@@ -661,14 +677,6 @@ else:
                         if order.get_paint_base() in menu.get_paint_base() else 0,
                     )
 
-                    # --- METADATA FOR PAINT BASE (UPDATE) ---
-                    # Show metadata for the selected paint base in update mode
-                    meta = menu.get_metadata("paint_base", paint_base)
-                    if meta:
-                        st.info(
-                            f"**Description:** {meta['description']}\n\n"
-                            f"**Sustainability:** {meta['sustainability_info']}"
-                        )
 
                     # Size selection (pre-filled with current size)
                     size_index = size_options.index(current_size_display) if current_size_display in size_options else 0
@@ -683,14 +691,6 @@ else:
                     )
                     additives = st.selectbox("Additives", additives_options, index=add_index)
 
-                    # --- METADATA FOR ADDITIVES (UPDATE) ---
-                    # Show metadata for the selected additive in update mode
-                    meta = menu.get_metadata("additives", additives)
-                    if meta:
-                        st.info(
-                            f"**Description:** {meta['description']}\n\n"
-                            f"**Sustainability:** {meta['sustainability_info']}"
-                        )
 
                     # Quantity input (pre-filled with existing quantity)
                     quantity = st.number_input(
