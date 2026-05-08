@@ -65,25 +65,106 @@ def init_db():
     if count == 0:
         # Default menu items with basic descriptions for paint bases
         default_items = [
-            # Paint bases (no price, but with descriptions)
-            ("paint_base", "Acrylic", 0, 0, "Fast-drying synthetic paint", "", ""),
-            ("paint_base", "Oil", 0, 0, "Slow-drying rich paint", "", ""),
-            ("paint_base", "Watercolor", 0, 0, "Transparent water-based paint", "", ""),
-            ("paint_base", "Tempera", 0, 0, "Fast-drying matte paint", "", ""),
-            ("paint_base", "Gouache", 0, 0, "Opaque watercolor paint", "", ""),
+    # ---------------------- Paint Bases ----------------------
+    (
+        "paint_base",
+        "Acrylic",
+        0,
+        0,
+        "Fast-drying synthetic paint",
+        "Low VOC, water-based, minimal environmental impact",
+        ""
+    ),
+    (
+        "paint_base",
+        "Oil",
+        0,
+        0,
+        "Slow-drying rich paint",
+        "Requires solvents; moderate air-quality impact",
+        ""
+    ),
+    (
+        "paint_base",
+        "Watercolor",
+        0,
+        0,
+        "Transparent water-based paint",
+        "Non-toxic, minimal waste, highly eco-friendly",
+        ""
+    ),
+    (
+        "paint_base",
+        "Tempera",
+        0,
+        0,
+        "Fast-drying matte paint",
+        "Biodegradable, low-impact natural ingredients",
+        ""
+    ),
+    (
+        "paint_base",
+        "Gouache",
+        0,
+        0,
+        "Opaque watercolor paint",
+        "Water-based, non-toxic, environmentally safe",
+        ""
+    ),
 
-            # Sizes (priced, no descriptions)
-            ("size", "Small", 1.50, 0, "", "", ""),
-            ("size", "Medium", 2.20, 0, "", "", ""),
-            ("size", "Large", 3.00, 0, "", "", ""),
+    # ---------------------- Sizes ----------------------
+    ("size", "Small", 1.50, 0, "", "Minimal material usage", ""),
+    ("size", "Medium", 2.20, 0, "", "Moderate material usage", ""),
+    ("size", "Large", 3.00, 0, "", "Higher material usage", ""),
 
-            # Additives (no price, no descriptions yet)
-            ("additives", "Thickener", 0, 0, "", "", ""),
-            ("additives", "Antioxidant", 0, 0, "", "", ""),
-            ("additives", "Hardener", 0, 0, "", "", ""),
-            ("additives", "Extender", 0, 0, "", "", ""),
-            ("additives", "None", 0, 0, "", "", ""),
-        ]
+    # ---------------------- Additives ----------------------
+    (
+        "additives",
+        "Thickener",
+        0,
+        0,
+        "Increases viscosity for textured strokes",
+        "Non-toxic, biodegradable polymer",
+        ""
+    ),
+    (
+        "additives",
+        "Antioxidant",
+        0,
+        0,
+        "Prevents pigment oxidation and extends paint life",
+        "Low environmental impact; stabilizes paint safely",
+        ""
+    ),
+    (
+        "additives",
+        "Hardener",
+        0,
+        0,
+        "Increases durability and scratch resistance",
+        "Solvent-based; moderate environmental impact",
+        ""
+    ),
+    (
+        "additives",
+        "Extender",
+        0,
+        0,
+        "Increases coverage and reduces pigment usage",
+        "Reduces total paint waste; low environmental impact",
+        ""
+    ),
+    (
+        "additives",
+        "None",
+        0,
+        0,
+        "No additives used",
+        "Zero additive footprint",
+        ""
+    ),
+]
+
 
         # Insert default menu items into the database
         cursor.executemany("""
