@@ -1,17 +1,16 @@
-import os                  # For building file paths relative to this script
-import sqlite3             # SQLite database for orders and menu
-from datetime import datetime  # For timestamp parsing and formatting
+import os
+import sqlite3
+from datetime import datetime
 
-import streamlit as st     # Streamlit UI framework
-from Artist import Artist  # Artist domain model
-from Paint import Paint    # Paint/order domain model
-from PaintMenu import PaintMenu  # Menu loader (now metadata-aware)
+import streamlit as st
+from Artist import Artist
+from Paint import Paint
+from PaintMenu import PaintMenu
 
 # -------------------------------------------------------------------
 # Configuration
 # -------------------------------------------------------------------
 
-# Path to the SQLite database file (orders + menu_items)
 DB_FILE_PATH = os.path.join(os.path.dirname(__file__), "orders.db")
 
 
@@ -64,15 +63,14 @@ def init_db():
 
     if count == 0:
         default_items = [
-
-            # ---------------------- Paint Bases ----------------------
+            # Paint bases
             (
                 "paint_base",
                 "Acrylic",
                 0,
                 0,
                 "Fast-drying synthetic paint with strong adhesion and versatility.",
-                "Low VOC, water-based, minimal environmental impact.",
+                "Low VOC, water-based, reduced solvent use and lower indoor air impact.",
                 ""
             ),
             (
@@ -81,7 +79,7 @@ def init_db():
                 0,
                 0,
                 "Slow-drying paint made with natural oils, ideal for blending and rich textures.",
-                "Requires solvents; moderate air-quality impact.",
+                "Requires solvents for cleanup; use in ventilated spaces to reduce air-quality impact.",
                 ""
             ),
             (
@@ -89,8 +87,8 @@ def init_db():
                 "Watercolor",
                 0,
                 0,
-                "Transparent water-activated pigment known for delicate layering.",
-                "Non-toxic, minimal waste, highly eco-friendly.",
+                "Transparent water-activated pigment known for delicate layering and washes.",
+                "Non-toxic, water-activated, minimal waste and highly eco-conscious when used with reusable palettes.",
                 ""
             ),
             (
@@ -99,7 +97,7 @@ def init_db():
                 0,
                 0,
                 "Fast-drying matte paint traditionally made with egg-based binders.",
-                "Biodegradable, low-impact natural ingredients.",
+                "Biodegradable, low-impact natural binders; avoid excessive rinsing into drains.",
                 ""
             ),
             (
@@ -107,24 +105,24 @@ def init_db():
                 "Gouache",
                 0,
                 0,
-                "Opaque watercolor with high pigment load and matte finish.",
-                "Water-based, non-toxic, environmentally safe.",
+                "Opaque watercolor with high pigment load and a smooth matte finish.",
+                "Water-based and generally low-toxicity; use minimal water and reuse mixes when possible.",
                 ""
             ),
 
-            # ---------------------- Sizes ----------------------
-            ("size", "Small", 1.50, 0, "", "Minimal material usage.", ""),
-            ("size", "Medium", 2.20, 0, "", "Moderate material usage.", ""),
-            ("size", "Large", 3.00, 0, "", "Higher material usage.", ""),
+            # Sizes
+            ("size", "Small", 1.50, 0, "", "Minimal material usage and lowest packaging footprint.", ""),
+            ("size", "Medium", 2.20, 0, "", "Balanced material usage for most projects.", ""),
+            ("size", "Large", 3.00, 0, "", "Higher material usage; best when fully utilized to avoid waste.", ""),
 
-            # ---------------------- Additives ----------------------
+            # Additives
             (
                 "additives",
                 "Thickener",
                 0,
                 0,
                 "Increases viscosity for textured strokes and controlled application.",
-                "Non-toxic, biodegradable polymer.",
+                "Formulated to be low-toxicity; use sparingly to reduce material consumption.",
                 ""
             ),
             (
@@ -133,7 +131,7 @@ def init_db():
                 0,
                 0,
                 "Prevents pigment oxidation and extends paint shelf life.",
-                "Low environmental impact; stabilizes paint safely.",
+                "Extends product life, reducing waste and repurchasing frequency.",
                 ""
             ),
             (
@@ -142,7 +140,7 @@ def init_db():
                 0,
                 0,
                 "Increases durability, hardness, and scratch resistance of dried paint.",
-                "Solvent-based; moderate environmental impact.",
+                "May contain stronger resins; use only when needed to limit chemical load.",
                 ""
             ),
             (
@@ -151,7 +149,7 @@ def init_db():
                 0,
                 0,
                 "Increases coverage and reduces pigment usage for more economical painting.",
-                "Reduces total paint waste; low environmental impact.",
+                "Improves coverage efficiency, lowering total pigment and binder usage.",
                 ""
             ),
             (
@@ -160,7 +158,7 @@ def init_db():
                 0,
                 0,
                 "No additives used.",
-                "Zero additive footprint.",
+                "No additive footprint; simplest and cleanest material profile.",
                 ""
             ),
         ]
@@ -180,11 +178,10 @@ def load_orders(search_artist: str = "", filter_paint_base: str = ""):
     Returns:
         list[Paint]: List of Paint order objects with attached _id and _quantity.
     """
-    init_db()  # Ensure DB and tables exist
+    init_db()
     conn = sqlite3.connect(DB_FILE_PATH)
     cursor = conn.cursor()
 
-    # Base query selects all orders
     query = """
         SELECT id, artist_fname, artist_lname, location, timestamp,
                paint_base, size, additives, additive_parts, cost, quantity
@@ -193,18 +190,15 @@ def load_orders(search_artist: str = "", filter_paint_base: str = ""):
     """
     params = []
 
-    # Optional filter: search by artist first or last name (partial match)
     if search_artist:
         query += " AND (artist_fname LIKE ? OR artist_lname LIKE ?)"
         params.append(f"%{search_artist}%")
         params.append(f"%{search_artist}%")
 
-    # Optional filter: specific paint base (unless "All")
     if filter_paint_base and filter_paint_base != "All":
         query += " AND paint_base = ?"
         params.append(filter_paint_base)
 
-    # Order results by timestamp (most recent first)
     query += " ORDER BY datetime(timestamp) DESC"
 
     cursor.execute(query, params)
@@ -227,36 +221,28 @@ def load_orders(search_artist: str = "", filter_paint_base: str = ""):
             quantity,
         ) = row
 
-        # Rebuild Artist object from stored fields
         artist = Artist(fname, lname, location)
-        # Parse timestamp string back into datetime
         timestamp = datetime.fromisoformat(timestamp_str)
 
-        # Rebuild Paint (order) object
         order = Paint(artist, paint_base, size, additives, additive_parts)
-        order._id = order_id                         # Attach DB id for updates/deletes
-        order._Paint__timestamp = timestamp          # Restore timestamp
-        order._Paint__cost = cost                    # Restore cost
-        order._quantity = quantity                   # Attach quantity
+        order._id = order_id
+        order._Paint__timestamp = timestamp
+        order._Paint__cost = cost
+        order._quantity = quantity
 
         orders.append(order)
 
-    # Cache orders in session state for reuse across views
     st.session_state.orders = orders
     return orders
 
 
 def save_order(order, quantity=1):
-    """
-    Insert a new order into the SQLite database.
-    """
     init_db()
     conn = sqlite3.connect(DB_FILE_PATH)
     cursor = conn.cursor()
 
-    artist = order.get_artist()  # Get artist info from order
+    artist = order.get_artist()
 
-    # Insert a new row into orders table
     cursor.execute("""
         INSERT INTO orders (
             artist_fname, artist_lname, location, timestamp,
@@ -281,16 +267,12 @@ def save_order(order, quantity=1):
 
 
 def update_order_in_db(order_id, updated_order, quantity=1):
-    """
-    Update an existing order in the SQLite database by id.
-    """
     init_db()
     conn = sqlite3.connect(DB_FILE_PATH)
     cursor = conn.cursor()
 
-    artist = updated_order.get_artist()  # Get updated artist info
+    artist = updated_order.get_artist()
 
-    # Update the row with matching id
     cursor.execute("""
         UPDATE orders
         SET artist_fname = ?,
@@ -323,9 +305,6 @@ def update_order_in_db(order_id, updated_order, quantity=1):
 
 
 def delete_order_from_db(order_id):
-    """
-    Delete an order from the SQLite database by id.
-    """
     init_db()
     conn = sqlite3.connect(DB_FILE_PATH)
     cursor = conn.cursor()
@@ -340,7 +319,6 @@ def delete_order_from_db(order_id):
 # Menu loading
 # -------------------------------------------------------------------
 
-# Ensure DB exists and is seeded, then load menu (with metadata) via PaintMenu
 init_db()
 menu = PaintMenu.from_db(DB_FILE_PATH)
 
@@ -349,27 +327,21 @@ menu = PaintMenu.from_db(DB_FILE_PATH)
 # Session state initialization
 # -------------------------------------------------------------------
 
-# Store the logged-in artist object
 if "artist" not in st.session_state:
     st.session_state.artist = None
 
-# Cache of loaded orders
 if "orders" not in st.session_state:
     st.session_state.orders = None
 
-# Current action/view (Place, View, Update, Delete)
 if "action" not in st.session_state:
     st.session_state.action = "Place Order"
 
-# Current order awaiting confirmation (for Place Order)
 if "current_order_for_confirmation" not in st.session_state:
     st.session_state.current_order_for_confirmation = None
 
-# Index of order being edited (for Update Order)
 if "edit_index" not in st.session_state:
     st.session_state.edit_index = None
 
-# Index of order being deleted (for Delete Order)
 if "delete_index" not in st.session_state:
     st.session_state.delete_index = None
 
@@ -379,9 +351,6 @@ if "delete_index" not in st.session_state:
 # -------------------------------------------------------------------
 
 def size_display_options():
-    """
-    Convert raw size strings like 'Small: 1.50' into display strings like 'Small - $1.50'.
-    """
     raw_sizes = menu.get_size()
     options = []
     for s in raw_sizes:
@@ -391,16 +360,10 @@ def size_display_options():
 
 
 def parse_size_name(display_value: str) -> str:
-    """
-    Extract the size name (e.g., 'Small') from a display string like 'Small - $1.50'.
-    """
     return display_value.split(" - ")[0]
 
 
 def get_size_price_map():
-    """
-    Build a mapping from size name to price string for quick lookup.
-    """
     mapping = {}
     for s in menu.get_size():
         name, price = [x.strip() for x in s.split(":")]
@@ -412,29 +375,24 @@ def get_size_price_map():
 # Main app
 # -------------------------------------------------------------------
 
-# App title at the top of the page
 st.title("Paint Order System")
 
-# If no artist is logged in, show login form
 if st.session_state.artist is None:
     st.header("Artist Login")
     with st.form("login_form"):
-        fname = st.text_input("First Name")      # Artist first name input
-        lname = st.text_input("Last Name")       # Artist last name input
-        location = st.text_input("Studio Number")  # Artist studio/location input
-        submitted = st.form_submit_button("Login")  # Login button
+        fname = st.text_input("First Name")
+        lname = st.text_input("Last Name")
+        location = st.text_input("Studio Number")
+        submitted = st.form_submit_button("Login")
 
         if submitted:
-            # Require all fields to be filled
             if fname and lname and location:
-                # Create Artist object and store in session
                 st.session_state.artist = Artist(fname, lname, location)
                 st.success("Logged in successfully!")
-                st.rerun()  # Rerun to show main app
+                st.rerun()
             else:
                 st.error("Please fill all fields.")
 else:
-    # Sidebar navigation for different actions
     st.sidebar.header("Navigation")
     if st.sidebar.button("Place Order"):
         st.session_state.action = "Place Order"
@@ -449,17 +407,15 @@ else:
         st.session_state.action = "Delete Order"
         st.rerun()
     if st.sidebar.button("Refresh Orders"):
-        # Clear cached orders so they reload from DB
         st.session_state.orders = None
         st.rerun()
 
-    # Current action determines which section to render
     action = st.session_state.action
 
     # ---------------------- Place Order ----------------------
     if action == "Place Order":
         st.header("Place a New Order")
-        # If user clicked "Duplicate" from View Orders, pre-fill defaults from that order
+
         dup = st.session_state.get("duplicate_order")
         if dup:
             default_paint_base = dup["paint_base"]
@@ -468,15 +424,13 @@ else:
             default_parts = dup["additive_parts"]
             default_quantity = dup["quantity"]
         else:
-            # Defaults when placing a fresh order
             default_paint_base = None
             default_size = None
             default_additives = None
             default_parts = 0
             default_quantity = 1
-        # Main order form for placing a new order
+
         with st.form("order_form"):
-            # Paint base selection
             paint_base = st.selectbox(
                 "Paint Base",
                 menu.get_paint_base(),
@@ -484,14 +438,13 @@ else:
                 if default_paint_base in menu.get_paint_base()
                 else 0
             )
-            # Live metadata for paint base directly under dropdown
             meta_base = menu.get_metadata("paint_base", paint_base)
             if meta_base:
                 st.info(
                     f"**Description:** {meta_base['description']}\n\n"
                     f"**Sustainability:** {meta_base['sustainability_info']}"
                 )
-            # Size selection (with price in label)
+
             size_options = size_display_options()
             size_price_map = get_size_price_map()
             default_size_display = (
@@ -506,7 +459,7 @@ else:
                 if default_size_display in size_options
                 else 0
             )
-            # Additives selection
+
             additives_options = menu.get_additives()
             default_add_index = (
                 additives_options.index("None") if "None" in additives_options else 0
@@ -518,21 +471,20 @@ else:
                 if default_additives in additives_options
                 else default_add_index
             )
-            # Live metadata for additives directly under dropdown
             meta_add = menu.get_metadata("additives", additives)
             if meta_add:
                 st.info(
                     f"**Description:** {meta_add['description']}\n\n"
                     f"**Sustainability:** {meta_add['sustainability_info']}"
                 )
-            # Quantity of items to order
+
             quantity = st.number_input(
                 "Quantity",
                 min_value=1,
                 step=1,
                 value=default_quantity
             )
-            # Show additive parts input only if additive is not "None"
+
             show_parts = additives.lower() != "none"
             additive_parts = 0
             if show_parts:
@@ -542,16 +494,15 @@ else:
                     step=1,
                     value=default_parts
                 )
-                # Show cost impact of additive parts
                 if additive_parts > 0:
                     st.write(
                         f"+$0.10 per part. Total additional: ${(additive_parts * 0.10):.2f}"
                     )
                 else:
                     st.write("+$0.10 per part.")
-            # Submit button to review the order before saving
+
             submitted = st.form_submit_button("Review Order")
-        # After form submission, build Paint object and move to confirmation step
+
         if submitted:
             size_name = parse_size_name(size_display)
             order = Paint(
@@ -564,56 +515,52 @@ else:
             order.calculate_cost(menu)
             st.session_state.current_order_for_confirmation = (order, quantity)
             st.rerun()
-        # If there is an order awaiting confirmation, show confirmation UI
+
         if st.session_state.current_order_for_confirmation is not None:
             order, quantity = st.session_state.current_order_for_confirmation
             st.subheader("Confirm Order")
             st.code(str(order))
-            # NEW PRICE BREAKDOWN: show per-item and total cost
+
             price_per_item = order.get_cost()
             total_price = price_per_item * quantity
             st.subheader("Price Breakdown")
             st.write(f"**Price per item:** ${price_per_item:.2f}")
             st.write(f"**Total for {quantity} items:** ${total_price:.2f}")
             st.write(f"Quantity: {quantity}")
-            # Two-column layout for Confirm and Cancel buttons
+
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("Confirm and Save"):
                     save_order(order, quantity=quantity)
                     st.session_state.duplicate_order = None
+                    st.session_state.current_order_for_confirmation = None
                     st.success("Order saved!")
                     st.rerun()
             with col2:
                 if st.button("Cancel Order"):
                     st.session_state.duplicate_order = None
+                    st.session_state.current_order_for_confirmation = None
                     st.info("Order cancelled.")
                     st.rerun()
-        # ---------------------- View Orders ----------------------
-elif action == "View Orders":
+
+    # ---------------------- View Orders ----------------------
+    elif action == "View Orders":
         st.header("View Orders")
 
-
-        # --- FILTER UI ---
-        # Text input to filter by artist name (first or last)
         search_artist = st.text_input("Search by artist name")
 
-        # Build list of unique paint bases from current DB for filter dropdown
-        all_orders_for_filter = load_orders()  # Load all orders without filters
+        all_orders_for_filter = load_orders()
         unique_bases = sorted(list({o.get_paint_base() for o in all_orders_for_filter}))
         filter_paint_base = st.selectbox("Filter by paint base", ["All"] + unique_bases)
 
-        # Load orders using the selected filters
         orders = load_orders(search_artist, filter_paint_base)
 
         if not orders:
-            # If no orders match filters, offer to place a new one
             st.info("No orders found. Would you like to place a new order?")
             if st.button("Place Order"):
                 st.session_state.action = "Place Order"
                 st.rerun()
         else:
-            # Build a simple table representation of orders for display
             data = []
             for order in orders:
                 item = f"{order.get_size()} {order.get_paint_base()} - {order.get_additives()} ({order.get_additive_parts()})"
@@ -625,241 +572,210 @@ elif action == "View Orders":
                     "Artist": f"{order.get_artist().get_fname()} {order.get_artist().get_lname()}",
                 })
 
-        # Show orders in a dataframe
-        st.dataframe(data)
+            st.dataframe(data)
 
-        # --- BASIC REPORTING SECTION ---
-        st.subheader("Summary & Reporting")
+            st.subheader("Summary & Reporting")
+            st.metric("Total Orders Displayed", len(orders))
 
-        # Metric: total number of orders currently displayed
-        st.metric("Total Orders Displayed", len(orders))
+            summary = {}
+            for order in orders:
+                base = order.get_paint_base()
+                qty = getattr(order, "_quantity", 1)
+                summary[base] = summary.get(base, 0) + qty
 
-        # Build summary of total units per paint base
-        summary = {}
-        for order in orders:
-            base = order.get_paint_base()
-            qty = getattr(order, "_quantity", 1)
-            summary[base] = summary.get(base, 0) + qty
+            summary_rows = [{"Paint Base": base, "Total Units": qty} for base, qty in summary.items()]
+            st.dataframe(summary_rows)
 
-        # Convert summary dict into a list of rows for dataframe
-        summary_rows = [{"Paint Base": base, "Total Units": qty} for base, qty in summary.items()]
+            st.subheader("Quick Actions")
+            for i, order in enumerate(orders):
+                col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
 
-        # Show summary table
-        st.dataframe(summary_rows)
-
-        # Quick action buttons for each order (Edit, Delete, Duplicate)
-        st.subheader("Quick Actions")
-        for i, order in enumerate(orders):
-            col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
-
-            with col1:
-                st.write(f"Order {i+1}: {data[i]['Item']} (Qty: {data[i]['Quantity']})")
-            with col2:
-                if st.button(f"Edit {i+1}", key=f"edit_{i}"):
-                    # Set edit_index and switch to Update Order view
-                    st.session_state.edit_index = i
-                    st.session_state.action = "Update Order"
-                    st.rerun()
-            with col3:
-                if st.button(f"Delete {i+1}", key=f"delete_{i}"):
-                    # Set delete_index and switch to Delete Order view
-                    st.session_state.delete_index = i
-                    st.session_state.action = "Delete Order"
-                    st.rerun()
-            with col4:
-                if st.button(f"Duplicate {i+1}", key=f"duplicate_{i}"):
-                    # Store order details in session to pre-fill Place Order form
-                    st.session_state.duplicate_order = {
-                        "paint_base": order.get_paint_base(),
-                        "size": order.get_size(),
-                        "additives": order.get_additives(),
-                        "additive_parts": order.get_additive_parts(),
-                        "quantity": getattr(order, "_quantity", 1),
-                    }
-                    st.session_state.action = "Place Order"
-                    st.rerun()
+                with col1:
+                    st.write(f"Order {i+1}: {data[i]['Item']} (Qty: {data[i]['Quantity']})")
+                with col2:
+                    if st.button(f"Edit {i+1}", key=f"edit_{i}"):
+                        st.session_state.edit_index = i
+                        st.session_state.action = "Update Order"
+                        st.rerun()
+                with col3:
+                    if st.button(f"Delete {i+1}", key=f"delete_{i}"):
+                        st.session_state.delete_index = i
+                        st.session_state.action = "Delete Order"
+                        st.rerun()
+                with col4:
+                    if st.button(f"Duplicate {i+1}", key=f"duplicate_{i}"):
+                        st.session_state.duplicate_order = {
+                            "paint_base": order.get_paint_base(),
+                            "size": order.get_size(),
+                            "additives": order.get_additives(),
+                            "additive_parts": order.get_additive_parts(),
+                            "quantity": getattr(order, "_quantity", 1),
+                        }
+                        st.session_state.action = "Place Order"
+                        st.rerun()
 
     # ---------------------- Update Order ----------------------
-elif action == "Update Order":
-    st.header("Update Order")
+    elif action == "Update Order":
+        st.header("Update Order")
 
-    # Use cached orders if available, otherwise load from DB
-    orders = st.session_state.orders or load_orders()
+        orders = st.session_state.orders or load_orders()
 
-    if not orders:
-        st.info("No orders to update. Would you like to place a new order?")
-        if st.button("Place Order"):
-            st.session_state.action = "Place Order"
-            st.rerun()
-
-    else:
-        idx = st.session_state.edit_index
-        if idx is None or idx >= len(orders):
-            st.info("Select an order to update from View Orders.")
-
+        if not orders:
+            st.info("No orders to update. Would you like to place a new order?")
+            if st.button("Place Order"):
+                st.session_state.action = "Place Order"
+                st.rerun()
         else:
-            order = orders[idx]
-            st.write(f"Updating: {order}")
+            idx = st.session_state.edit_index
+            if idx is None or idx >= len(orders):
+                st.info("Select an order to update from View Orders.")
+            else:
+                order = orders[idx]
+                st.write(f"Updating: {order}")
 
-            # Prepare size options and current size display string
-            size_price_map = get_size_price_map()
-            size_options = size_display_options()
-            current_size_display = (
-                f"{order.get_size()} - ${size_price_map.get(order.get_size(), '0.00')}"
-            )
-
-            # Update form for editing an existing order
-            with st.form("update_form"):
-
-                # Paint base selection (pre-filled with current value)
-                paint_base = st.selectbox(
-                    "Paint Base",
-                    menu.get_paint_base(),
-                    index=menu.get_paint_base().index(order.get_paint_base())
-                    if order.get_paint_base() in menu.get_paint_base()
-                    else 0,
+                size_price_map = get_size_price_map()
+                size_options = size_display_options()
+                current_size_display = (
+                    f"{order.get_size()} - ${size_price_map.get(order.get_size(), '0.00')}"
                 )
 
-                    # --- LIVE METADATA: Paint Base ---
-                meta_base = menu.get_metadata("paint_base", paint_base)
-                if meta_base:
-                    st.info(
-                        f"**Description:** {meta_base['description']}\n\n"
-                        f"**Sustainability:** {meta_base['sustainability_info']}"
+                with st.form("update_form"):
+                    paint_base = st.selectbox(
+                        "Paint Base",
+                        menu.get_paint_base(),
+                        index=menu.get_paint_base().index(order.get_paint_base())
+                        if order.get_paint_base() in menu.get_paint_base()
+                        else 0,
                     )
+                    meta_base = menu.get_metadata("paint_base", paint_base)
+                    if meta_base:
+                        st.info(
+                            f"**Description:** {meta_base['description']}\n\n"
+                            f"**Sustainability:** {meta_base['sustainability_info']}"
+                        )
 
-                # Size selection (pre-filled with current size)
-                size_index = (
-                    size_options.index(current_size_display)
-                    if current_size_display in size_options
-                    else 0
-                )
-                size_display = st.selectbox("Size", size_options, index=size_index)
-
-                # Additives selection (pre-filled with current additive)
-                additives_options = menu.get_additives()
-                add_index = (
-                    additives_options.index(order.get_additives())
-                    if order.get_additives() in additives_options
-                    else (
-                        additives_options.index("None")
-                        if "None" in additives_options
+                    size_index = (
+                        size_options.index(current_size_display)
+                        if current_size_display in size_options
                         else 0
                     )
-                )
-                additives = st.selectbox("Additives", additives_options, index=add_index)
+                    size_display = st.selectbox("Size", size_options, index=size_index)
 
-                # --- LIVE METADATA: Additives ---
-                meta_add = menu.get_metadata("additives", additives)
-                if meta_add:
-                    st.info(
-                        f"**Description:** {meta_add['description']}\n\n"
-                        f"**Sustainability:** {meta_add['sustainability_info']}"
-                    )
-
-                # Quantity input (pre-filled with existing quantity)
-                quantity = st.number_input(
-                    "Quantity",
-                    min_value=1,
-                    step=1,
-                    value=getattr(order, "_quantity", 1),
-                )
-
-                    # Additive parts input shown only if additive is not "None"
-                show_parts = additives.lower() != "none"
-                if show_parts:
-                    additive_parts = st.number_input(
-                        "Additive Parts",
-                        min_value=0,
-                        step=1,
-                        value=order.get_additive_parts(),
-                    )
-                    if additive_parts > 0:
-                        st.write(
-                            f"+$0.10 per part. Total additional: ${(additive_parts * 0.10):.2f}"
+                    additives_options = menu.get_additives()
+                    add_index = (
+                        additives_options.index(order.get_additives())
+                        if order.get_additives() in additives_options
+                        else (
+                            additives_options.index("None")
+                            if "None" in additives_options
+                            else 0
                         )
-                    else:
-                        st.write("+$0.10 per part.")
-                else:
-                    additive_parts = 0
+                    )
+                    additives = st.selectbox("Additives", additives_options, index=add_index)
+                    meta_add = menu.get_metadata("additives", additives)
+                    if meta_add:
+                        st.info(
+                            f"**Description:** {meta_add['description']}\n\n"
+                            f"**Sustainability:** {meta_add['sustainability_info']}"
+                        )
 
-                    # Submit button to review updated order
-                submitted = st.form_submit_button("Review Updated Order")
+                    quantity = st.number_input(
+                        "Quantity",
+                        min_value=1,
+                        step=1,
+                        value=getattr(order, "_quantity", 1),
+                    )
 
-            # After submission, build updated Paint object and show confirmation
-            if submitted:
-                size_name = parse_size_name(size_display)
-                updated_order = Paint(
-                    st.session_state.artist,
-                    paint_base,
-                    size_name,
-                    additives,
-                    additive_parts,
-                )
-                updated_order.calculate_cost(menu)
-
-                st.subheader("Confirm Update")
-                st.code(str(updated_order))
-                st.write(f"Quantity: {quantity}")
-
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.button("Confirm Update"):
-                        order_id = getattr(order, "_id", None)
-                        if order_id is None:
-                            st.error("Could not determine order ID for update.")
+                    show_parts = additives.lower() != "none"
+                    if show_parts:
+                        additive_parts = st.number_input(
+                            "Additive Parts",
+                            min_value=0,
+                            step=1,
+                            value=order.get_additive_parts(),
+                        )
+                        if additive_parts > 0:
+                            st.write(
+                                f"+$0.10 per part. Total additional: ${(additive_parts * 0.10):.2f}"
+                            )
                         else:
-                            update_order_in_db(order_id, updated_order, quantity=quantity)
-                            st.success("Order updated!")
-                            st.session_state.orders = None
+                            st.write("+$0.10 per part.")
+                    else:
+                        additive_parts = 0
+
+                    submitted = st.form_submit_button("Review Updated Order")
+
+                if submitted:
+                    size_name = parse_size_name(size_display)
+                    updated_order = Paint(
+                        st.session_state.artist,
+                        paint_base,
+                        size_name,
+                        additives,
+                        additive_parts,
+                    )
+                    updated_order.calculate_cost(menu)
+
+                    st.subheader("Confirm Update")
+                    st.code(str(updated_order))
+                    price_per_item = updated_order.get_cost()
+                    total_price = price_per_item * quantity
+                    st.subheader("Price Breakdown")
+                    st.write(f"**Price per item:** ${price_per_item:.2f}")
+                    st.write(f"**Total for {quantity} items:** ${total_price:.2f}")
+                    st.write(f"Quantity: {quantity}")
+
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.button("Confirm Update"):
+                            order_id = getattr(order, "_id", None)
+                            if order_id is None:
+                                st.error("Could not determine order ID for update.")
+                            else:
+                                update_order_in_db(order_id, updated_order, quantity=quantity)
+                                st.success("Order updated!")
+                                st.session_state.orders = None
+                                st.session_state.edit_index = None
+                                st.rerun()
+                    with col2:
+                        if st.button("Cancel Update"):
+                            st.info("Update cancelled.")
                             st.session_state.edit_index = None
                             st.rerun()
 
-                with col2:
-                    if st.button("Cancel Update"):
-                        st.info("Update cancelled.")
-                        st.session_state.edit_index = None
-                        st.rerun()
-
-
     # ---------------------- Delete Order ----------------------
-elif action == "Delete Order":
-    st.header("Delete Order")
+    elif action == "Delete Order":
+        st.header("Delete Order")
 
-    # Use cached orders if available, otherwise load from DB
-    orders = st.session_state.orders or load_orders()
+        orders = st.session_state.orders or load_orders()
 
-    if not orders:
-        # If no orders exist, suggest placing a new one
-        st.info("No orders to delete. Would you like to place a new order?")
-        if st.button("Place Order"):
-            st.session_state.action = "Place Order"
-            st.rerun()
-    else:
-        idx = st.session_state.delete_index
-        if idx is None or idx >= len(orders):
-            # If no order is selected for deletion, instruct user to pick from View Orders
-            st.info("Select an order to delete from View Orders.")
+        if not orders:
+            st.info("No orders to delete. Would you like to place a new order?")
+            if st.button("Place Order"):
+                st.session_state.action = "Place Order"
+                st.rerun()
         else:
-            order = orders[idx]
-            st.write(f"Deleting: {order}")
+            idx = st.session_state.delete_index
+            if idx is None or idx >= len(orders):
+                st.info("Select an order to delete from View Orders.")
+            else:
+                order = orders[idx]
+                st.write(f"Deleting: {order}")
 
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("Confirm Delete"):
-                    # Use attached _id to delete the correct DB row
-                    order_id = getattr(order, "_id", None)
-                    if order_id is None:
-                        st.error("Could not determine order ID for deletion.")
-                    else:
-                        delete_order_from_db(order_id)
-                        st.success("Order deleted.")
-                        # Clear cached orders and delete index, then rerun
-                        st.session_state.orders = None
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("Confirm Delete"):
+                        order_id = getattr(order, "_id", None)
+                        if order_id is None:
+                            st.error("Could not determine order ID for deletion.")
+                        else:
+                            delete_order_from_db(order_id)
+                            st.success("Order deleted.")
+                            st.session_state.orders = None
+                            st.session_state.delete_index = None
+                            st.rerun()
+                with col2:
+                    if st.button("Cancel Delete"):
+                        st.info("Delete cancelled.")
                         st.session_state.delete_index = None
                         st.rerun()
-            with col2:
-                if st.button("Cancel Delete"):
-                    st.info("Delete cancelled.")
-                    st.session_state.delete_index = None
-                    st.rerun()
