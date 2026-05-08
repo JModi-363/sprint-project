@@ -409,7 +409,7 @@ else:
     if st.sidebar.button("Refresh Orders"):
         st.session_state.orders = None
         st.rerun()
-    if st.sidebar.button("Logout"):
+    if st.sidebar.button("Log Out"):
         st.session_state.artist = None
         st.session_state.orders = None
         st.session_state.current_order_for_confirmation = None
