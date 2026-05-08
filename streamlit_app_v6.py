@@ -71,8 +71,8 @@ def init_db():
         "Acrylic",
         0,
         0,
-        "Fast-drying synthetic paint",
-        "Low VOC, water-based, minimal environmental impact",
+        "Fast-drying synthetic paint with strong adhesion and versatility.",
+        "Low VOC, water-based, minimal environmental impact.",
         ""
     ),
     (
@@ -80,8 +80,8 @@ def init_db():
         "Oil",
         0,
         0,
-        "Slow-drying rich paint",
-        "Requires solvents; moderate air-quality impact",
+        "Slow-drying paint made with natural oils, ideal for blending and rich textures.",
+        "Requires solvents; moderate air-quality impact.",
         ""
     ),
     (
@@ -89,8 +89,8 @@ def init_db():
         "Watercolor",
         0,
         0,
-        "Transparent water-based paint",
-        "Non-toxic, minimal waste, highly eco-friendly",
+        "Transparent water-activated pigment known for delicate layering.",
+        "Non-toxic, minimal waste, highly eco-friendly.",
         ""
     ),
     (
@@ -98,8 +98,8 @@ def init_db():
         "Tempera",
         0,
         0,
-        "Fast-drying matte paint",
-        "Biodegradable, low-impact natural ingredients",
+        "Fast-drying matte paint traditionally made with egg-based binders.",
+        "Biodegradable, low-impact natural ingredients.",
         ""
     ),
     (
@@ -107,15 +107,15 @@ def init_db():
         "Gouache",
         0,
         0,
-        "Opaque watercolor paint",
-        "Water-based, non-toxic, environmentally safe",
+        "Opaque watercolor with high pigment load and matte finish.",
+        "Water-based, non-toxic, environmentally safe.",
         ""
     ),
 
     # ---------------------- Sizes ----------------------
-    ("size", "Small", 1.50, 0, "", "Minimal material usage", ""),
-    ("size", "Medium", 2.20, 0, "", "Moderate material usage", ""),
-    ("size", "Large", 3.00, 0, "", "Higher material usage", ""),
+    ("size", "Small", 1.50, 0, "", "Minimal material usage.", ""),
+    ("size", "Medium", 2.20, 0, "", "Moderate material usage.", ""),
+    ("size", "Large", 3.00, 0, "", "Higher material usage.", ""),
 
     # ---------------------- Additives ----------------------
     (
@@ -123,8 +123,8 @@ def init_db():
         "Thickener",
         0,
         0,
-        "Increases viscosity for textured strokes",
-        "Non-toxic, biodegradable polymer",
+        "Increases viscosity for textured strokes and controlled application.",
+        "Non-toxic, biodegradable polymer.",
         ""
     ),
     (
@@ -132,8 +132,8 @@ def init_db():
         "Antioxidant",
         0,
         0,
-        "Prevents pigment oxidation and extends paint life",
-        "Low environmental impact; stabilizes paint safely",
+        "Prevents pigment oxidation and extends paint shelf life.",
+        "Low environmental impact; stabilizes paint safely.",
         ""
     ),
     (
@@ -141,8 +141,8 @@ def init_db():
         "Hardener",
         0,
         0,
-        "Increases durability and scratch resistance",
-        "Solvent-based; moderate environmental impact",
+        "Increases durability, hardness, and scratch resistance of dried paint.",
+        "Solvent-based; moderate environmental impact.",
         ""
     ),
     (
@@ -150,8 +150,8 @@ def init_db():
         "Extender",
         0,
         0,
-        "Increases coverage and reduces pigment usage",
-        "Reduces total paint waste; low environmental impact",
+        "Increases coverage and reduces pigment usage for more economical painting.",
+        "Reduces total paint waste; low environmental impact.",
         ""
     ),
     (
@@ -159,11 +159,12 @@ def init_db():
         "None",
         0,
         0,
-        "No additives used",
-        "Zero additive footprint",
+        "No additives used.",
+        "Zero additive footprint.",
         ""
     ),
 ]
+
 
 
         # Insert default menu items into the database
