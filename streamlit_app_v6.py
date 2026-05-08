@@ -11,7 +11,7 @@ from PaintMenu import PaintMenu
 # Configuration
 # -------------------------------------------------------------------
 
-DB_FILE_PATH = os.path.join(os.path.dirname(__file__), "orders.db")
+DB_FILE_PATH = os.path.join(os.path.dirname(__file__), "orders_v2.db")
 
 
 # -------------------------------------------------------------------
