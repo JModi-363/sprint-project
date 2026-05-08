@@ -819,6 +819,7 @@ else:
     elif action == "Delete Order":
         st.header("Delete Order")
 
+        # Load orders
         orders = st.session_state.orders or load_orders()
 
         if not orders:
@@ -826,28 +827,115 @@ else:
             if st.button("Place Order"):
                 st.session_state.action = "Place Order"
                 st.rerun()
-        else:
-            idx = st.session_state.delete_index
-            if idx is None or idx >= len(orders):
-                st.info("Select an order to delete from View Orders.")
-            else:
-                order = orders[idx]
-                st.write(f"Deleting: {order}")
 
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.button("Confirm Delete"):
-                        order_id = getattr(order, "_id", None)
-                        if order_id is None:
-                            st.error("Could not determine order ID for deletion.")
-                        else:
-                            delete_order_from_db(order_id)
-                            st.success("Order deleted.")
-                            st.session_state.orders = None
-                            st.session_state.delete_index = None
-                            st.rerun()
-                with col2:
-                    if st.button("Cancel Delete"):
-                        st.info("Delete cancelled.")
-                        st.session_state.delete_index = None
-                        st.rerun()
+        # -----------------------------
+        # SEARCH + FILTER BAR
+        # -----------------------------
+        st.subheader("Search & Filter")
+
+        colA, colB = st.columns(2)
+
+        with colA:
+            search_artist = st.text_input("Search by artist name")
+
+        with colB:
+            unique_bases = sorted(list({o.get_paint_base() for o in orders}))
+            filter_base = st.selectbox("Filter by paint base", ["All"] + unique_bases)
+
+        # Apply filters
+        filtered_orders = [
+            o for o in orders
+            if (search_artist.lower() in o.get_artist().get_fname().lower()
+                or search_artist.lower() in o.get_artist().get_lname().lower()
+                or search_artist == "")
+            and (filter_base == "All" or o.get_paint_base() == filter_base)
+        ]
+
+        if not filtered_orders:
+            st.warning("No matching orders.")
+            st.stop()
+
+        # -----------------------------
+        # DATAFRAME VIEW
+        # -----------------------------
+        st.subheader("Orders")
+
+        df_rows = []
+        for o in filtered_orders:
+            df_rows.append({
+                "Timestamp": o.get_timestamp().strftime("%Y-%m-%d %I:%M %p"),
+                "Paint Base": o.get_paint_base(),
+                "Size": o.get_size(),
+                "Additives": o.get_additives(),
+                "Parts": o.get_additive_parts(),
+                "Qty": getattr(o, "_quantity", 1),
+                "Artist": f"{o.get_artist().get_fname()} {o.get_artist().get_lname()}",
+            })
+
+        st.dataframe(df_rows, use_container_width=True)
+
+        # -----------------------------
+        # RADIO LIST SELECTOR
+        # -----------------------------
+        st.subheader("Select an Order to Delete")
+
+        radio_labels = [
+            f"{i+1}. {o.get_size()} {o.get_paint_base()} - {o.get_additives()} "
+            f"({o.get_additive_parts()}) | Qty {getattr(o, '_quantity', 1)} | "
+            f"{o.get_timestamp().strftime('%Y-%m-%d %I:%M %p')}"
+            for i, o in enumerate(filtered_orders)
+        ]
+
+        selected_label = st.radio("Choose an order:", radio_labels)
+        selected_index = radio_labels.index(selected_label)
+        order = filtered_orders[selected_index]
+
+        # Store index for DB delete
+        st.session_state.delete_index = orders.index(order)
+
+        st.markdown("---")
+
+        # -----------------------------
+        # SIDE-BY-SIDE COMPARISON
+        # -----------------------------
+        st.subheader("Order Details Before Deletion")
+
+        col_old, col_warn = st.columns(2)
+
+        with col_old:
+            st.markdown("### Order Summary")
+            st.write(f"**Paint Base:** {order.get_paint_base()}")
+            st.write(f"**Size:** {order.get_size()}")
+            st.write(f"**Additives:** {order.get_additives()}")
+            st.write(f"**Additive Parts:** {order.get_additive_parts()}")
+            st.write(f"**Quantity:** {getattr(order, '_quantity', 1)}")
+            st.write(f"**Cost:** ${order.get_cost():.2f}")
+
+        with col_warn:
+            st.markdown("### Warning")
+            st.error("This action cannot be undone.")
+
+        st.markdown("---")
+
+        # -----------------------------
+        # CONFIRMATION BUTTONS
+        # -----------------------------
+        col1, col2 = st.columns(2)
+
+        with col1:
+            if st.button("Confirm Delete"):
+                order_id = getattr(order, "_id", None)
+                if order_id is None:
+                    st.error("Could not determine order ID for deletion.")
+                else:
+                    delete_order_from_db(order_id)
+                    st.success("Order deleted.")
+                    st.session_state.orders = None
+                    st.session_state.delete_index = None
+                    st.rerun()
+
+        with col2:
+            if st.button("Cancel Delete"):
+                st.info("Delete cancelled.")
+                st.session_state.delete_index = None
+                st.rerun()
