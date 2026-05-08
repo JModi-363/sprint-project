@@ -27,7 +27,7 @@ def init_db():
     conn = sqlite3.connect(DB_FILE_PATH)
     cursor = conn.cursor()
 
-    # Orders table: stores each paint order with artist info, paint choices, cost, and quantity
+    # Orders table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS orders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -44,7 +44,7 @@ def init_db():
         )
     """)
 
-    # Menu items table: stores paint bases, sizes, additives, prices, and metadata
+    # Menu items table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS menu_items (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,116 +58,113 @@ def init_db():
         )
     """)
 
-    # Check if menu_items is empty; if so, seed with default values
+    # Seed menu items if empty
     cursor.execute("SELECT COUNT(*) FROM menu_items")
     count = cursor.fetchone()[0]
 
     if count == 0:
-        # Default menu items with basic descriptions for paint bases
         default_items = [
-    # ---------------------- Paint Bases ----------------------
-    (
-        "paint_base",
-        "Acrylic",
-        0,
-        0,
-        "Fast-drying synthetic paint with strong adhesion and versatility.",
-        "Low VOC, water-based, minimal environmental impact.",
-        ""
-    ),
-    (
-        "paint_base",
-        "Oil",
-        0,
-        0,
-        "Slow-drying paint made with natural oils, ideal for blending and rich textures.",
-        "Requires solvents; moderate air-quality impact.",
-        ""
-    ),
-    (
-        "paint_base",
-        "Watercolor",
-        0,
-        0,
-        "Transparent water-activated pigment known for delicate layering.",
-        "Non-toxic, minimal waste, highly eco-friendly.",
-        ""
-    ),
-    (
-        "paint_base",
-        "Tempera",
-        0,
-        0,
-        "Fast-drying matte paint traditionally made with egg-based binders.",
-        "Biodegradable, low-impact natural ingredients.",
-        ""
-    ),
-    (
-        "paint_base",
-        "Gouache",
-        0,
-        0,
-        "Opaque watercolor with high pigment load and matte finish.",
-        "Water-based, non-toxic, environmentally safe.",
-        ""
-    ),
 
-    # ---------------------- Sizes ----------------------
-    ("size", "Small", 1.50, 0, "", "Minimal material usage.", ""),
-    ("size", "Medium", 2.20, 0, "", "Moderate material usage.", ""),
-    ("size", "Large", 3.00, 0, "", "Higher material usage.", ""),
+            # ---------------------- Paint Bases ----------------------
+            (
+                "paint_base",
+                "Acrylic",
+                0,
+                0,
+                "Fast-drying synthetic paint with strong adhesion and versatility.",
+                "Low VOC, water-based, minimal environmental impact.",
+                ""
+            ),
+            (
+                "paint_base",
+                "Oil",
+                0,
+                0,
+                "Slow-drying paint made with natural oils, ideal for blending and rich textures.",
+                "Requires solvents; moderate air-quality impact.",
+                ""
+            ),
+            (
+                "paint_base",
+                "Watercolor",
+                0,
+                0,
+                "Transparent water-activated pigment known for delicate layering.",
+                "Non-toxic, minimal waste, highly eco-friendly.",
+                ""
+            ),
+            (
+                "paint_base",
+                "Tempera",
+                0,
+                0,
+                "Fast-drying matte paint traditionally made with egg-based binders.",
+                "Biodegradable, low-impact natural ingredients.",
+                ""
+            ),
+            (
+                "paint_base",
+                "Gouache",
+                0,
+                0,
+                "Opaque watercolor with high pigment load and matte finish.",
+                "Water-based, non-toxic, environmentally safe.",
+                ""
+            ),
 
-    # ---------------------- Additives ----------------------
-    (
-        "additives",
-        "Thickener",
-        0,
-        0,
-        "Increases viscosity for textured strokes and controlled application.",
-        "Non-toxic, biodegradable polymer.",
-        ""
-    ),
-    (
-        "additives",
-        "Antioxidant",
-        0,
-        0,
-        "Prevents pigment oxidation and extends paint shelf life.",
-        "Low environmental impact; stabilizes paint safely.",
-        ""
-    ),
-    (
-        "additives",
-        "Hardener",
-        0,
-        0,
-        "Increases durability, hardness, and scratch resistance of dried paint.",
-        "Solvent-based; moderate environmental impact.",
-        ""
-    ),
-    (
-        "additives",
-        "Extender",
-        0,
-        0,
-        "Increases coverage and reduces pigment usage for more economical painting.",
-        "Reduces total paint waste; low environmental impact.",
-        ""
-    ),
-    (
-        "additives",
-        "None",
-        0,
-        0,
-        "No additives used.",
-        "Zero additive footprint.",
-        ""
-    ),
-]
+            # ---------------------- Sizes ----------------------
+            ("size", "Small", 1.50, 0, "", "Minimal material usage.", ""),
+            ("size", "Medium", 2.20, 0, "", "Moderate material usage.", ""),
+            ("size", "Large", 3.00, 0, "", "Higher material usage.", ""),
 
+            # ---------------------- Additives ----------------------
+            (
+                "additives",
+                "Thickener",
+                0,
+                0,
+                "Increases viscosity for textured strokes and controlled application.",
+                "Non-toxic, biodegradable polymer.",
+                ""
+            ),
+            (
+                "additives",
+                "Antioxidant",
+                0,
+                0,
+                "Prevents pigment oxidation and extends paint shelf life.",
+                "Low environmental impact; stabilizes paint safely.",
+                ""
+            ),
+            (
+                "additives",
+                "Hardener",
+                0,
+                0,
+                "Increases durability, hardness, and scratch resistance of dried paint.",
+                "Solvent-based; moderate environmental impact.",
+                ""
+            ),
+            (
+                "additives",
+                "Extender",
+                0,
+                0,
+                "Increases coverage and reduces pigment usage for more economical painting.",
+                "Reduces total paint waste; low environmental impact.",
+                ""
+            ),
+            (
+                "additives",
+                "None",
+                0,
+                0,
+                "No additives used.",
+                "Zero additive footprint.",
+                ""
+            ),
+        ]
 
-
-        # Insert default menu items into the database
         cursor.executemany("""
             INSERT INTO menu_items (category, name, price, additive_parts, description, sustainability_info, origin)
             VALUES (?, ?, ?, ?, ?, ?, ?)
