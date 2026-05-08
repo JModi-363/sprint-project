@@ -501,7 +501,7 @@ else:
                 else:
                     st.write("+$0.10 per part.")
 
-            submitted = st.form_submit_button("Review Order")
+            submitted = st.form_submit_button("Preview Order")
 
         if submitted:
             size_name = parse_size_name(size_display)
@@ -530,7 +530,7 @@ else:
 
             col1, col2 = st.columns(2)
             with col1:
-                if st.button("Confirm and Save"):
+                if st.button("Submit Order"):
                     save_order(order, quantity=quantity)
                     st.session_state.duplicate_order = None
                     st.session_state.current_order_for_confirmation = None
