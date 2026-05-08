@@ -618,6 +618,7 @@ else:
     elif action == "Update Order":
         st.header("Update Order")
 
+        # Load orders
         orders = st.session_state.orders or load_orders()
 
         if not orders:
@@ -625,123 +626,194 @@ else:
             if st.button("Place Order"):
                 st.session_state.action = "Place Order"
                 st.rerun()
-        else:
-            idx = st.session_state.edit_index
-            if idx is None or idx >= len(orders):
-                st.info("Select an order to update from View Orders.")
-            else:
-                order = orders[idx]
-                st.write(f"Updating: {order}")
 
-                size_price_map = get_size_price_map()
-                size_options = size_display_options()
-                current_size_display = (
-                    f"{order.get_size()} - ${size_price_map.get(order.get_size(), '0.00')}"
+        # -----------------------------
+        # SEARCH + FILTER BAR
+        # -----------------------------
+        st.subheader("Search & Filter")
+
+        colA, colB = st.columns(2)
+
+        with colA:
+            search_artist = st.text_input("Search by artist name")
+
+        with colB:
+            unique_bases = sorted(list({o.get_paint_base() for o in orders}))
+            filter_base = st.selectbox("Filter by paint base", ["All"] + unique_bases)
+
+        # Apply filters
+        filtered_orders = [
+            o for o in orders
+            if (search_artist.lower() in o.get_artist().get_fname().lower()
+                or search_artist.lower() in o.get_artist().get_lname().lower()
+                or search_artist == "")
+            and (filter_base == "All" or o.get_paint_base() == filter_base)
+        ]
+
+        if not filtered_orders:
+            st.warning("No matching orders.")
+            st.stop()
+
+        # -----------------------------
+        # DATAFRAME VIEW
+        # -----------------------------
+        st.subheader("Orders")
+
+        df_rows = []
+        for o in filtered_orders:
+            df_rows.append({
+                "Timestamp": o.get_timestamp().strftime("%Y-%m-%d %I:%M %p"),
+                "Paint Base": o.get_paint_base(),
+                "Size": o.get_size(),
+                "Additives": o.get_additives(),
+                "Parts": o.get_additive_parts(),
+                "Qty": getattr(o, "_quantity", 1),
+                "Artist": f"{o.get_artist().get_fname()} {o.get_artist().get_lname()}",
+            })
+
+        st.dataframe(df_rows, use_container_width=True)
+
+        # -----------------------------
+        # RADIO LIST SELECTOR
+        # -----------------------------
+        st.subheader("Select an Order to Update")
+
+        radio_labels = [
+            f"{i+1}. {o.get_size()} {o.get_paint_base()} - {o.get_additives()} "
+            f"({o.get_additive_parts()}) | Qty {getattr(o, '_quantity', 1)} | "
+            f"{o.get_timestamp().strftime('%Y-%m-%d %I:%M %p')}"
+            for i, o in enumerate(filtered_orders)
+        ]
+
+        selected_label = st.radio("Choose an order:", radio_labels)
+        selected_index = radio_labels.index(selected_label)
+        order = filtered_orders[selected_index]
+
+        # Store index for DB update
+        st.session_state.edit_index = orders.index(order)
+
+        st.markdown("---")
+
+        # -----------------------------
+        # SIDE-BY-SIDE COMPARISON
+        # -----------------------------
+        st.subheader("Current Order Details")
+
+        col_old, col_new = st.columns(2)
+
+        with col_old:
+            st.markdown("### Existing Values")
+            st.write(f"**Paint Base:** {order.get_paint_base()}")
+            st.write(f"**Size:** {order.get_size()}")
+            st.write(f"**Additives:** {order.get_additives()}")
+            st.write(f"**Additive Parts:** {order.get_additive_parts()}")
+            st.write(f"**Quantity:** {getattr(order, '_quantity', 1)}")
+            st.write(f"**Cost:** ${order.get_cost():.2f}")
+
+        with col_new:
+            st.markdown("### New Values")
+            st.info("Fill out the form below to update the order.")
+
+        st.markdown("---")
+
+        # -----------------------------
+        # UPDATE FORM
+        # -----------------------------
+        st.subheader("Edit Order")
+
+        size_price_map = get_size_price_map()
+        size_options = size_display_options()
+        current_size_display = f"{order.get_size()} - ${size_price_map.get(order.get_size(), '0.00')}"
+
+        with st.form("update_form"):
+
+            # Paint base
+            paint_base = st.selectbox(
+                "Paint Base",
+                menu.get_paint_base(),
+                index=menu.get_paint_base().index(order.get_paint_base())
+            )
+            meta_base = menu.get_metadata("paint_base", paint_base)
+            if meta_base:
+                st.info(
+                    f"**Description:** {meta_base['description']}\n\n"
+                    f"**Sustainability:** {meta_base['sustainability_info']}"
                 )
 
-                with st.form("update_form"):
-                    paint_base = st.selectbox(
-                        "Paint Base",
-                        menu.get_paint_base(),
-                        index=menu.get_paint_base().index(order.get_paint_base())
-                        if order.get_paint_base() in menu.get_paint_base()
-                        else 0,
-                    )
-                    meta_base = menu.get_metadata("paint_base", paint_base)
-                    if meta_base:
-                        st.info(
-                            f"**Description:** {meta_base['description']}\n\n"
-                            f"**Sustainability:** {meta_base['sustainability_info']}"
-                        )
+            # Size
+            size_index = size_options.index(current_size_display)
+            size_display = st.selectbox("Size", size_options, index=size_index)
 
-                    size_index = (
-                        size_options.index(current_size_display)
-                        if current_size_display in size_options
-                        else 0
-                    )
-                    size_display = st.selectbox("Size", size_options, index=size_index)
+            # Additives
+            additives_options = menu.get_additives()
+            add_index = additives_options.index(order.get_additives())
+            additives = st.selectbox("Additives", additives_options, index=add_index)
 
-                    additives_options = menu.get_additives()
-                    add_index = (
-                        additives_options.index(order.get_additives())
-                        if order.get_additives() in additives_options
-                        else (
-                            additives_options.index("None")
-                            if "None" in additives_options
-                            else 0
-                        )
-                    )
-                    additives = st.selectbox("Additives", additives_options, index=add_index)
-                    meta_add = menu.get_metadata("additives", additives)
-                    if meta_add:
-                        st.info(
-                            f"**Description:** {meta_add['description']}\n\n"
-                            f"**Sustainability:** {meta_add['sustainability_info']}"
-                        )
+            meta_add = menu.get_metadata("additives", additives)
+            if meta_add:
+                st.info(
+                    f"**Description:** {meta_add['description']}\n\n"
+                    f"**Sustainability:** {meta_add['sustainability_info']}"
+                )
 
-                    quantity = st.number_input(
-                        "Quantity",
-                        min_value=1,
-                        step=1,
-                        value=getattr(order, "_quantity", 1),
-                    )
+            # Quantity
+            quantity = st.number_input(
+                "Quantity",
+                min_value=1,
+                step=1,
+                value=getattr(order, "_quantity", 1),
+            )
 
-                    show_parts = additives.lower() != "none"
-                    if show_parts:
-                        additive_parts = st.number_input(
-                            "Additive Parts",
-                            min_value=0,
-                            step=1,
-                            value=order.get_additive_parts(),
-                        )
-                        if additive_parts > 0:
-                            st.write(
-                                f"+$0.10 per part. Total additional: ${(additive_parts * 0.10):.2f}"
-                            )
-                        else:
-                            st.write("+$0.10 per part.")
-                    else:
-                        additive_parts = 0
+            # Additive parts
+            show_parts = additives.lower() != "none"
+            if show_parts:
+                additive_parts = st.number_input(
+                    "Additive Parts",
+                    min_value=0,
+                    step=1,
+                    value=order.get_additive_parts(),
+                )
+            else:
+                additive_parts = 0
 
-                    submitted = st.form_submit_button("Review Updated Order")
+            submitted = st.form_submit_button("Review Updated Order")
 
-                if submitted:
-                    size_name = parse_size_name(size_display)
-                    updated_order = Paint(
-                        st.session_state.artist,
-                        paint_base,
-                        size_name,
-                        additives,
-                        additive_parts,
-                    )
-                    updated_order.calculate_cost(menu)
+        if submitted:
+            size_name = parse_size_name(size_display)
+            updated_order = Paint(
+                st.session_state.artist,
+                paint_base,
+                size_name,
+                additives,
+                additive_parts,
+            )
+            updated_order.calculate_cost(menu)
 
-                    st.subheader("Confirm Update")
-                    st.code(str(updated_order))
-                    price_per_item = updated_order.get_cost()
-                    total_price = price_per_item * quantity
-                    st.subheader("Price Breakdown")
-                    st.write(f"**Price per item:** ${price_per_item:.2f}")
-                    st.write(f"**Total for {quantity} items:** ${total_price:.2f}")
-                    st.write(f"Quantity: {quantity}")
+            st.subheader("Confirm Update")
+            st.code(str(updated_order))
 
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        if st.button("Confirm Update"):
-                            order_id = getattr(order, "_id", None)
-                            if order_id is None:
-                                st.error("Could not determine order ID for update.")
-                            else:
-                                update_order_in_db(order_id, updated_order, quantity=quantity)
-                                st.success("Order updated!")
-                                st.session_state.orders = None
-                                st.session_state.edit_index = None
-                                st.rerun()
-                    with col2:
-                        if st.button("Cancel Update"):
-                            st.info("Update cancelled.")
-                            st.session_state.edit_index = None
-                            st.rerun()
+            price_per_item = updated_order.get_cost()
+            total_price = price_per_item * quantity
+
+            st.write(f"**Price per item:** ${price_per_item:.2f}")
+            st.write(f"**Total for {quantity} items:** ${total_price:.2f}")
+
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Confirm Update"):
+                    order_id = getattr(order, "_id", None)
+                    update_order_in_db(order_id, updated_order, quantity=quantity)
+                    st.success("Order updated!")
+                    st.session_state.orders = None
+                    st.session_state.edit_index = None
+                    st.rerun()
+
+            with col2:
+                if st.button("Cancel Update"):
+                    st.info("Update cancelled.")
+                    st.session_state.edit_index = None
+                    st.rerun()
+
 
     # ---------------------- Delete Order ----------------------
     elif action == "Delete Order":
