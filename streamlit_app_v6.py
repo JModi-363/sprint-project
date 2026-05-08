@@ -590,94 +590,94 @@ else:
                     st.info("Order cancelled.")
                     st.rerun()
         # ---------------------- View Orders ----------------------
-    elif action == "View Orders":
-            st.header("View Orders")
+elif action == "View Orders":
+        st.header("View Orders")
 
 
-            # --- FILTER UI ---
-            # Text input to filter by artist name (first or last)
-            search_artist = st.text_input("Search by artist name")
+        # --- FILTER UI ---
+        # Text input to filter by artist name (first or last)
+        search_artist = st.text_input("Search by artist name")
 
-            # Build list of unique paint bases from current DB for filter dropdown
-            all_orders_for_filter = load_orders()  # Load all orders without filters
-            unique_bases = sorted(list({o.get_paint_base() for o in all_orders_for_filter}))
-            filter_paint_base = st.selectbox("Filter by paint base", ["All"] + unique_bases)
+        # Build list of unique paint bases from current DB for filter dropdown
+        all_orders_for_filter = load_orders()  # Load all orders without filters
+        unique_bases = sorted(list({o.get_paint_base() for o in all_orders_for_filter}))
+        filter_paint_base = st.selectbox("Filter by paint base", ["All"] + unique_bases)
 
-            # Load orders using the selected filters
-            orders = load_orders(search_artist, filter_paint_base)
+        # Load orders using the selected filters
+        orders = load_orders(search_artist, filter_paint_base)
 
-            if not orders:
-                # If no orders match filters, offer to place a new one
-                st.info("No orders found. Would you like to place a new order?")
-                if st.button("Place Order"):
+        if not orders:
+            # If no orders match filters, offer to place a new one
+            st.info("No orders found. Would you like to place a new order?")
+            if st.button("Place Order"):
+                st.session_state.action = "Place Order"
+                st.rerun()
+        else:
+            # Build a simple table representation of orders for display
+            data = []
+            for order in orders:
+                item = f"{order.get_size()} {order.get_paint_base()} - {order.get_additives()} ({order.get_additive_parts()})"
+                data.append({
+                    "Timestamp": order.get_timestamp().strftime("%Y-%m-%d %I:%M %p"),
+                    "Item": item,
+                    "Cost": f"${order.get_cost():.2f}",
+                    "Quantity": getattr(order, "_quantity", 1),
+                    "Artist": f"{order.get_artist().get_fname()} {order.get_artist().get_lname()}",
+                })
+
+        # Show orders in a dataframe
+        st.dataframe(data)
+
+        # --- BASIC REPORTING SECTION ---
+        st.subheader("Summary & Reporting")
+
+        # Metric: total number of orders currently displayed
+        st.metric("Total Orders Displayed", len(orders))
+
+        # Build summary of total units per paint base
+        summary = {}
+        for order in orders:
+            base = order.get_paint_base()
+            qty = getattr(order, "_quantity", 1)
+            summary[base] = summary.get(base, 0) + qty
+
+        # Convert summary dict into a list of rows for dataframe
+        summary_rows = [{"Paint Base": base, "Total Units": qty} for base, qty in summary.items()]
+
+        # Show summary table
+        st.dataframe(summary_rows)
+
+        # Quick action buttons for each order (Edit, Delete, Duplicate)
+        st.subheader("Quick Actions")
+        for i, order in enumerate(orders):
+            col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
+
+            with col1:
+                st.write(f"Order {i+1}: {data[i]['Item']} (Qty: {data[i]['Quantity']})")
+            with col2:
+                if st.button(f"Edit {i+1}", key=f"edit_{i}"):
+                    # Set edit_index and switch to Update Order view
+                    st.session_state.edit_index = i
+                    st.session_state.action = "Update Order"
+                    st.rerun()
+            with col3:
+                if st.button(f"Delete {i+1}", key=f"delete_{i}"):
+                    # Set delete_index and switch to Delete Order view
+                    st.session_state.delete_index = i
+                    st.session_state.action = "Delete Order"
+                    st.rerun()
+            with col4:
+                if st.button(f"Duplicate {i+1}", key=f"duplicate_{i}"):
+                    # Store order details in session to pre-fill Place Order form
+                    st.session_state.duplicate_order = {
+                        "paint_base": order.get_paint_base(),
+                        "size": order.get_size(),
+                        "additives": order.get_additives(),
+                        "additive_parts": order.get_additive_parts(),
+                        "quantity": getattr(order, "_quantity", 1),
+                    }
                     st.session_state.action = "Place Order"
                     st.rerun()
-            else:
-                # Build a simple table representation of orders for display
-                data = []
-                for order in orders:
-                    item = f"{order.get_size()} {order.get_paint_base()} - {order.get_additives()} ({order.get_additive_parts()})"
-                    data.append({
-                        "Timestamp": order.get_timestamp().strftime("%Y-%m-%d %I:%M %p"),
-                        "Item": item,
-                        "Cost": f"${order.get_cost():.2f}",
-                        "Quantity": getattr(order, "_quantity", 1),
-                        "Artist": f"{order.get_artist().get_fname()} {order.get_artist().get_lname()}",
-                    })
-
-            # Show orders in a dataframe
-            st.dataframe(data)
-
-            # --- BASIC REPORTING SECTION ---
-            st.subheader("Summary & Reporting")
-
-            # Metric: total number of orders currently displayed
-            st.metric("Total Orders Displayed", len(orders))
-
-            # Build summary of total units per paint base
-            summary = {}
-            for order in orders:
-                base = order.get_paint_base()
-                qty = getattr(order, "_quantity", 1)
-                summary[base] = summary.get(base, 0) + qty
-
-            # Convert summary dict into a list of rows for dataframe
-            summary_rows = [{"Paint Base": base, "Total Units": qty} for base, qty in summary.items()]
-
-            # Show summary table
-            st.dataframe(summary_rows)
-
-            # Quick action buttons for each order (Edit, Delete, Duplicate)
-            st.subheader("Quick Actions")
-            for i, order in enumerate(orders):
-                col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
-
-                with col1:
-                    st.write(f"Order {i+1}: {data[i]['Item']} (Qty: {data[i]['Quantity']})")
-                with col2:
-                    if st.button(f"Edit {i+1}", key=f"edit_{i}"):
-                        # Set edit_index and switch to Update Order view
-                        st.session_state.edit_index = i
-                        st.session_state.action = "Update Order"
-                        st.rerun()
-                with col3:
-                    if st.button(f"Delete {i+1}", key=f"delete_{i}"):
-                        # Set delete_index and switch to Delete Order view
-                        st.session_state.delete_index = i
-                        st.session_state.action = "Delete Order"
-                        st.rerun()
-                with col4:
-                    if st.button(f"Duplicate {i+1}", key=f"duplicate_{i}"):
-                        # Store order details in session to pre-fill Place Order form
-                        st.session_state.duplicate_order = {
-                            "paint_base": order.get_paint_base(),
-                            "size": order.get_size(),
-                            "additives": order.get_additives(),
-                            "additive_parts": order.get_additive_parts(),
-                            "quantity": getattr(order, "_quantity", 1),
-                        }
-                        st.session_state.action = "Place Order"
-                        st.rerun()
 
     # ---------------------- Update Order ----------------------
 elif action == "Update Order":
