@@ -608,16 +608,16 @@ else:
         orders = st.session_state.orders or load_orders()
 
         if not orders:
-            # If no orders exist, suggest placing a new one
             st.info("No orders to update. Would you like to place a new order?")
             if st.button("Place Order"):
                 st.session_state.action = "Place Order"
                 st.rerun()
+
         else:
             idx = st.session_state.edit_index
             if idx is None or idx >= len(orders):
-                # If no order is selected for editing, instruct user to pick from View Orders
                 st.info("Select an order to update from View Orders.")
+
             else:
                 order = orders[idx]
                 st.write(f"Updating: {order}")
@@ -625,21 +625,36 @@ else:
                 # Prepare size options and current size display string
                 size_price_map = get_size_price_map()
                 size_options = size_display_options()
-                current_size_display = f"{order.get_size()} - ${size_price_map.get(order.get_size(), '0.00')}"
+                current_size_display = (
+                    f"{order.get_size()} - ${size_price_map.get(order.get_size(), '0.00')}"
+                )
 
                 # Update form for editing an existing order
                 with st.form("update_form"):
+
                     # Paint base selection (pre-filled with current value)
                     paint_base = st.selectbox(
                         "Paint Base",
                         menu.get_paint_base(),
                         index=menu.get_paint_base().index(order.get_paint_base())
-                        if order.get_paint_base() in menu.get_paint_base() else 0,
+                        if order.get_paint_base() in menu.get_paint_base()
+                        else 0,
                     )
 
+                    # --- LIVE METADATA: Paint Base ---
+                    meta_base = menu.get_metadata("paint_base", paint_base)
+                    if meta_base:
+                        st.info(
+                            f"**Description:** {meta_base['description']}\n\n"
+                            f"**Sustainability:** {meta_base['sustainability_info']}"
+                        )
 
                     # Size selection (pre-filled with current size)
-                    size_index = size_options.index(current_size_display) if current_size_display in size_options else 0
+                    size_index = (
+                        size_options.index(current_size_display)
+                        if current_size_display in size_options
+                        else 0
+                    )
                     size_display = st.selectbox("Size", size_options, index=size_index)
 
                     # Additives selection (pre-filled with current additive)
@@ -647,10 +662,21 @@ else:
                     add_index = (
                         additives_options.index(order.get_additives())
                         if order.get_additives() in additives_options
-                        else (additives_options.index("None") if "None" in additives_options else 0)
+                        else (
+                            additives_options.index("None")
+                            if "None" in additives_options
+                            else 0
+                        )
                     )
                     additives = st.selectbox("Additives", additives_options, index=add_index)
 
+                    # --- LIVE METADATA: Additives ---
+                    meta_add = menu.get_metadata("additives", additives)
+                    if meta_add:
+                        st.info(
+                            f"**Description:** {meta_add['description']}\n\n"
+                            f"**Sustainability:** {meta_add['sustainability_info']}"
+                        )
 
                     # Quantity input (pre-filled with existing quantity)
                     quantity = st.number_input(
@@ -700,22 +726,22 @@ else:
                     col1, col2 = st.columns(2)
                     with col1:
                         if st.button("Confirm Update"):
-                            # Use attached _id to update the correct DB row
                             order_id = getattr(order, "_id", None)
                             if order_id is None:
                                 st.error("Could not determine order ID for update.")
                             else:
                                 update_order_in_db(order_id, updated_order, quantity=quantity)
                                 st.success("Order updated!")
-                                # Clear cached orders and edit index, then rerun
                                 st.session_state.orders = None
                                 st.session_state.edit_index = None
                                 st.rerun()
+
                     with col2:
                         if st.button("Cancel Update"):
                             st.info("Update cancelled.")
                             st.session_state.edit_index = None
                             st.rerun()
+
 
     # ---------------------- Delete Order ----------------------
     elif action == "Delete Order":
