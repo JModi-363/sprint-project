@@ -590,7 +590,7 @@ else:
                     st.info("Order cancelled.")
                     st.rerun()
         # ---------------------- View Orders ----------------------
-        elif action == "View Orders":
+    elif action == "View Orders":
             st.header("View Orders")
 
 
