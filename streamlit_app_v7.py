@@ -290,6 +290,8 @@ def save_order(order, quantity=1):
         quantity,
     ))
 
+    write_order_to_txt("CREATE", order, quantity=quantity)
+
     conn.commit()
     conn.close()
 
@@ -327,6 +329,8 @@ def update_order_in_db(order_id, updated_order, quantity=1):
         quantity,
         order_id,
     ))
+
+    write_order_to_txt("UPDATE", updated_order, quantity=quantity, order_id=order_id)
 
     conn.commit()
     conn.close()
